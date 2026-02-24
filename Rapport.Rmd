@@ -1,0 +1,10 @@
+---
+title: "Analyse Fonctionnelle"
+author: "CARLU Jonas, AFANE Fouad, LANCON Cindy"
+date: "2026-02-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
