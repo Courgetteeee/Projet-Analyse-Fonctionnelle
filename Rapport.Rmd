@@ -8,3 +8,17 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Introduction
+
+Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de mesure espacés de 30 minutes sur deux semaines consécutives.
+
+Contrairement à une analyse classique où nous traitons chaque instant de mesure serait traité comme une variable indépendante, nous considérons ici que chaque ligne du jeu de données correspond à une fonction de consommation évoluant dans le temps. Nous adaptons donc une approche d'Analyse de Données Fonctionnelles (FDA). L'analyse reposera sur trois étapes principales :
+
+-    Reconstruction des courbes continues par lissage B-splines pénalisé.
+
+<!-- -->
+
+-   Mise en oeuvre d'une Analyse en Composantes Principales Fonctionnelle (ACP fonctionnelle), afin de résumer la variabilité des courbes et d'identifier les principaux modes de variation des profils de consommation.
+
+-   Classification des entreprises par clustering, afin de regrouper les consommateurs présentant des comportements similaires.
