@@ -43,6 +43,7 @@ Contrairement à une analyse classique où nous traitons chaque instant de mesur
 chemin <- "donnees/smart278co.Rdata"
 load(chemin)
 table <- smart.278co
+df <- as.data.frame(table)
 
 #Nb de lignes
 n <- nrow(table)
@@ -336,7 +337,7 @@ Approche, proposée par Xiao et al. (2016)
 On utilise l'algorithme $fpca.face()$ du package $refund$ qui estime et lisse la matrice de covariance globale (au lieu de lisser les individus un par un). A partir de cette matrice, il extrait les fonctions propres (les composantes) et les scores de chaque individu. On extraie ici les deux premières composantes (PC1 et PC2), que lon multiplie par $\sqrt{p}$ (c'est le bouquin qui dit qu'il faut le faire, jai pas trop compris pourquoi...) On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
 
 ```{r}
-W <- as.matrix(df)
+W <- as.matrix(table)
 
 modele_fpca <- fpca.face(Y = W, argvals = time, knots = 50, pve = 0.95)
 # summary(modele_fpca)
