@@ -686,3 +686,15 @@ rect.hclust(res.cah, k = 4, border =2:5) #Encadrer les 4 groupes
 **Analyse du dendrogramme** (à refaire)
 
 # Conclusion
+
+Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
+
+La classification non supervisée réalisée sur les scores des quatre premières composantes a mis en évidence quatre profils distincts de consommation. La segmentation obtenue reflète principalement des différences de niveau global de consommation, avec des nuances dans la régularité et l’intensité des cycles journaliers.
+
+Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une méthode efficace pour synthétiser et segmenter des données de consommation énergétique massives
+
+# Références
+
+-   Goga, C. — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
+
+-   *Functional Data Analysis* with R -
