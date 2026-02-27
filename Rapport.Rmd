@@ -765,7 +765,19 @@ km_res$tot.withinss
 
 ## Interprétation des profils types (centres des clusters)
 
-La représentation des moyennes fonctionnelles par cluster met clairement en évidence quatre profils distincts de consommation, confirmant la pertinence de la classification réalisée sur les scores issus de l’ACP fonctionnelle.
+### Sur données brutes
+
+Le **Cluster 1 (n = 5831)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard.
+
+Le **Cluster 2 (n = 102)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée. Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique supérieure et des fluctuations plus prononcées.
+
+Le **Cluster 3 (n = 314)** correspond à un profil de consommation plus modéré. Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2. Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
+
+Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente un niveau global distinct et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
+
+Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
+
+### Sur données log(1+Conso) (à titre de comparaison)
 
 Le **Cluster 1 (n = 1054)** correspond aux profils présentant le niveau global de consommation le plus faible de l’échantillon. Les cycles journaliers sont visibles mais d’amplitude modérée, avec une structure régulière sur l’ensemble des 14 jours. Ce groupe regroupe donc les foyers caractérisés par une faible intensité énergétique globale.
 
