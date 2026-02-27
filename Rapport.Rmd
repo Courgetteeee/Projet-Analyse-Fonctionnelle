@@ -96,6 +96,11 @@ Chaque cycle présente une dynamique similaire : une phase de faible consommatio
 
 La stabilité de la forme moyenne suggère que la variabilité observée entre individus porte principalement sur l’amplitude des pics plutôt que sur la structure temporelle globale.
 
-(Ajout vérification valeurs manquantes)
+# Vérification des valeurs manquantes
+```{r}
+sum(is.na(table))
+
+```
+Aucune valeur manquante n’est détectée dans la matrice de données. Il n’est donc pas nécessaire d’effectuer une étape d’imputation ou de reconstruction préalable.
 
 # Lissage semi-paramétrique
