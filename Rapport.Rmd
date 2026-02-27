@@ -88,7 +88,7 @@ ggplot() +
   #Couleurs
   scale_color_manual(values = c("Moyenne"="blue", "Médiane"="purple"))+
   theme_minimal()+
-  labs(title = "Consommation éléctrique moyenne et médiane", color="Courbe")
+  labs(title = "Consommation électrique moyenne et médiane", color="Courbe")
 ```
 
 La courbe moyenne met clairement en évidence une structure périodique régulière.On observe clairement quatorze cycles journaliers successifs.
@@ -105,38 +105,40 @@ sum(is.na(table))
 
 Aucune valeur manquante n’est détectée dans la matrice de données. Il n’est donc pas nécessaire d’effectuer une étape d’imputation ou de reconstruction préalable.
 
-
 # Lissage semi-paramétrique
 
-L'objectif de cette partie est de passer des observations discrètes $Y_i$ à des courbes continues $\hat{f}_i$, afin de pouvoir appliquer par la suite l'ACP fonctionnelle et le clustering. 
+L'objectif de cette partie est de passer des observations discrètes $Y_i$ à des courbes continues $\hat{f}_i$, afin de pouvoir appliquer par la suite l'ACP fonctionnelle et le clustering.
 
-Pour réaliser cette transformation, deux alternatives méthodologiques se présentent : l'approche historique de l'Analyse de Données Fonctionnelles (stricte projection sur une base de B-splines avec optimisation du paramètre de lissage par Validation Croisée) et l'approche par splines pénalisées (optimisation automatique par la méthode REML). 
+Pour réaliser cette transformation, deux alternatives méthodologiques se présentent : l'approche historique de l'Analyse de Données Fonctionnelles (stricte projection sur une base de B-splines avec optimisation du paramètre de lissage par Validation Croisée) et l'approche par splines pénalisées (optimisation automatique par la méthode REML).
 
-## Alternative 1 : Base de B-splines et Validation Croisée 
+## Alternative 1 : Base de B-splines et Validation Croisée
 
-Les données de consommation de chaque entreprise $i$ sont observées aux instants discrétisés $t_1, ..., t_D$, avec $D= 672$ points qui sont équidistants et espacés de 30 minutes sur deux semaines. On note :
+Les données de consommation de chaque entreprise i sont observées aux instants discrétisés $t_1,...,t_D$, avec D= 672 points qui sont équidistants espacés de 30 minutes sur deux semaines.
 
-* $Y_{id}$ : la consommation électrique de l'entreprise à l'instant $t_d$, $d=1,...,D$.
-* $Y_i = (Y_{i1}, ..., Y_{iD})^T$ : le vecteur de toutes les mesures de l'entreprise $i$.
-* $f_i$ : la courbe de consommation continue que l'on cherche à reconstruire.
-* $\epsilon_{id}$ : le bruit.
+L'objectif de cette partie est donc de passer des observations discrètes et bruitées $Y_i$, aux véritables courbes continues $\hat{f_i}$. En effet, les données brutes comportent du bruit de mesure qui empêche de comparer les individus point par point.
 
-Comme les mesures $Y_{id}$ peuvent souvent être observées avec des erreurs de mesure, nous posons un modèle non paramétrique pour chaque individu $i=1,...,n$ du type :
-$$Y_{id}= f_i(t_d) + \epsilon_{id}, \quad d=1,...,D.$$
+Pour chaque entreprise i, on pose le modèle :
 
-La courbe reconstruite est $Y(t) = \hat{f}(t)$ pour tout $t\in[1;672]$. Nous estimons $f_i$ par une base de B-splines $b_1(\cdot),..., b_q(\cdot)$ de dimension $q = K+m$, où :
-* $K$ = nombre de nœuds intérieurs équidistants sur $[1 : 672]$
-* $m-1$ = degré des polynômes par morceaux.
+$$ Y_i(t_d) = f_i(t_d)+\epsilon_i(t_d), \space d=1,...,D $$
 
-En notant $b^T(t) = (b_1(t),..., b_q(t))$ le vecteur des fonctions de base et $B$ la matrice de dimension $D\times q$ dont la $d$-ième ligne est $b^T(t_d)$, l'estimateur s'écrit : 
-$$\hat{f}(t_d) = b^T(t_d)\hat{\theta} = \hat{Y}(t_d), \quad d=1,...,D.$$
+où $\epsilon_i$ est le bruit et $f_i$ est estimée dans une base de B-splines $B_1(.),...., B_q(.)$, de dimension q = K+m, avec :
 
-Ainsi, nous posons $n$ modèles non-paramétriques indépendants. 
+-   K = nombre de noeuds intérieurs équidistants sur [1 : 672]
+
+-   m-1 = degré des polynômes par morceaux.
+
+La courbe s'écrit donc :
+
+$$ f_i(t) = \sum_{k=1}^{q} \beta_k B_k(t) $$
+
+Les coefficients $\beta_k$ sont estimés en minimisant l'erreur quadratique pénalisée :
+
+$$ \sum_{i,t} \left(Y_i(t) - f(t)\right)^2  \;+\; \lambda \int \left( f''(t) \right)^2 dt $$où :
+
+-   $\lambda \ge 0$ est le paramètre de lissage,
+-   le terme $\displaystyle \int (f''(t))^2 dt$ pénalise la rugosité de la fonction.
 
 ```{r base_bspline}
-p <- 672
-time <- 1:p # Création du vecteur temps
-n <- nrow(smart.278co)
 
 K <- 35 # Nombre de noeuds
 degree <- 3 # Degré des polynômes, m-1
@@ -151,18 +153,9 @@ base_bspline <- create.bspline.basis(
 )
 ```
 
-Soit $\delta$ le paramètre de lissage utilisé dans la reconstruction d'une courbe $Y_i$.
-Il peut être sélectionné en minimisant le critère de validation croisée généralisée (GCV) défini comme :
+Soit $\delta$ le paramètre de lissage utilisé dans la reconstruction d'une courbe $Y_i$. Il peut être sélectionné en minimisant le critère de validation croisée généralisée (GCV).
 
-$$GCV(\delta) = \frac{1}{n}\sum_{i=1}^{n} \sum_{d=1}^{D}
-\frac{(Y_{id} - \hat{Y}_{id})^2}{\left(1 - \text{trace}(S(\delta))/D\right)^2}$$
-
-Où $S(\delta) = B(B^TB + \delta P)^{-1} B^T$ est la matrice chapeau pénalisée.
-Plus $\delta$ est grand, plus la trace est petite et le modèle est simple et lisse.
-
-Nous calculons le $\delta^*$ optimal pour chaque individu séparément en balayant une grille de valeurs.
-Une approche individuelle est plus rigoureuse qu'un $\delta$ commun car les entreprises peuvent avoir
-des profils de consommation très différents.
+Nous calculons donc le $\delta^*$ optimal pour chaque individu séparément en balayant une grille de valeurs. Une approche individuelle est plus rigoureuse qu'un $\delta$ commun car les entreprises peuvent avoir des profils de consommation très différents.
 
 ```{r}
 #Grille des paramètre de lissage à tester
@@ -185,23 +178,29 @@ delta_opt_i <- function(i){
 Vérification de l'optimisation sur un individu de test :
 
 ```{r}
-i <- 2 # Choix de l'individu 2 pour le test
+set.seed(368)
+index_sample <- sample(1:n, 3)
+i <- index_sample[2]
+
 y_i <- as.numeric(smart.278co[i, ])
 delta_opt_i_test <- delta_opt_i(i)
 
-cat("Le delta optimal pour l'individu", i, "est", delta_opt_i_test, "\n")
+cat("Le delta optimal pour l'individu : ",i," est ", delta_opt_i_test)
+
 
 gcv_val <- sapply(delta_grid, calcul_gcv, y_i = y_i)
-df_plot_test1 <- data.frame(delta = delta_grid, gcv = gcv_val)
 
-ggplot(df_plot_test1, aes(x = log10(delta), y = gcv)) +
-  geom_line(color = "darkblue") +
-  geom_point(color = "black") +
-  geom_vline(xintercept = log10(delta_opt_i_test), color = "red") +
-  theme_minimal() +
-  labs(title = paste("Sélection de delta par GCV pour l'individu", i), 
-       x = "Paramètre de lissage en log", 
-       y = "GCV(delta)")
+#dataframe pour le plot
+df_plot_test1 <- data.frame( delta=delta_grid, gcv = gcv_val)
+
+ggplot( df_plot_test1, aes(x=log10(delta), y=gcv)) +
+  geom_line(color="darkblue") +
+  geom_point(color="black")+
+  #Delta optimal
+  geom_vline(xintercept = log10(delta_opt_i_test), color="red")+
+  theme_minimal()+
+  
+  labs( title = paste("Selection de delta par GCV pour l'individu", i), x="Paramètre de lissage en log", y="GCV(delta)")
 ```
 
 Visualisation de la courbe lissée :
@@ -222,59 +221,39 @@ ggplot(df_i_fda, aes(x = temps)) +
   labs(title = "Approximation B-spline sur 2 semaines", x = "Temps", y = "Consommation")
 ```
 
-Application à l'ensemble de la base de données :
+Application à l'ensemble de la base de données : (pour approche 2 PCA)
+
+```{r, eval=FALSE}
+deltas_res <- sapply(1:n, delta_opt_i)
+```
 
 ```{r}
-deltas_res <- sapply(1:n, delta_opt_i)
-
+deltas_res <- readRDS("donnees/deltas_res.rds")
 lisser_i <- function(i){
   y_i <- as.numeric(smart.278co[i, ])
   res <- fdPar(base_bspline, Lfdobj = 2, lambda = deltas_res[i])
   smooth.basis(time, y_i, res)$fd
 }
 
+#retourne list de 6291objets fd séparés -> pca.fd a besoin d'un seul objet
 fd_list <- lapply(1:n, lisser_i)
-fd_final <- do.call(c, fd_list)
+
+#Extraire les coefs
+extraire_coefs <- function(fd_i){
+  as.numeric(fd_i$coefs)
+}
+
+coefs_mat <- sapply(fd_list, extraire_coefs)
+
+#Reconstruire en un seul objet fd
+fd_final <- fd(coefs_mat, base_bspline)
 ```
 
 ## Alternative 2 : Splines Pénalisées et modèle GAM
 
-La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$.
-L'objectif est ici de transformer une suite de points discrets et bruités d'un individu (ici le premier du dataset) en une véritable courbe continue mathématique, représentant son "signal biologique ou physique" latent.
-En effet, les données brutes comportent du bruit instrumental qui empêche de comparer les individus point par point. Nous utilisons alors une approche par splines pénalisées. Pour éviter le sur-apprentissage ou le sous-apprentissage, nous utilisons l'équivalence avec les modèles mixtes décrites dans le chapitre 2.3 :
-
-$$
-\textbf{Modèle mathématique :}
-$$
-
-Le modèle additif généralisé estime la production $Y_i(t)$ au temps $t$ via une fonction lisse $f(t)$ :
-
-$$
-Y_i(t) = f(t) + \epsilon_i(t)
-$$
-
-où $f(t)$ est construite comme une combinaison linéaire de $K$ splines :
-
-$$
-f(t) = \sum_{k=1}^{K} \beta_k B_k(t)
-$$ 
-
-Les coefficients $\beta_k$ sont estimés en minimisant l'erreur quadratique pénalisée :
-
-$$
-\sum_{i,t} \left(Y_i(t) - f(t)\right)^2 
-\;+\;
-\lambda \int \left( f''(t) \right)^2 dt
-$$
-
-où :
-
-- $\lambda \ge 0$ est le paramètre de lissage,
-- le terme $\displaystyle \int (f''(t))^2 dt$ pénalise la rugosité de la fonction.
+La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$. Le modèle est identique à l'Alternative 1. La seule différence réside dans la sélection du paramètre de lissage $\lambda$ : au lieu d'une recherche manuelle par GCV, celui-ci est estimé automatiquement par la méthode REML (Restricted Maximum Likelihood) intégrée à gam(). Cette approche est plus rapide et évite de définir une grille de valeurs.
 
 On utilise la fonction $gam()$ pour ajuster les courbes lisses dans lequel on spécifie un terme de lissage utilisant des splines cubiques avec un maximum de 40 noeuds possibles.
-
-((K peut être choisi en utlisant le critère de validation croisée ou validation crosée généralisée et m est petit (3 ou 4). Les noeuds peuvent être positionnés aux quantiles des instants $t_1,...,t_D$.))
 
 ### Choix du nombre de noeuds K
 
@@ -282,15 +261,13 @@ On utilise la fonction $gam()$ pour ajuster les courbes lisses dans lequel on sp
 
 k = 40 = q -\> K = q-m = 36
 
-Ou K = 84 (Fouad) : Le choix du nombre de fonctions de base est dicté par la nécessité de capturer les variations intra-journalières (pics de consommation du matin et du soir) sur une période de 14 jours.La consommation électrique présente au minimum deux événements majeurs par jour.\
-Afin de modéliser correctement ces cycles quotidiens, nous retenons environ 5 à 6 fonctions de base par jour.
+Ou K = 84 (Fouad) : Le choix du nombre de fonctions de base est dicté par la nécessité de capturer les variations intra-journalières (pics de consommation du matin et du soir) sur une période de 14 jours.La consommation électrique présente au minimum deux événements majeurs par jour.
 
-## Exemple sur un individu 
+## Exemple sur un individu
 
 ```{r}
 
 # on extrait le premier individu pour la démo
-t <- 1:672
 ind_1 <- as.numeric(table[1,])
 df_1 <- data.frame(Temps=time, Var=ind_1)
 
@@ -302,15 +279,11 @@ modele_gam <- gam(Var ~ s(Temps, bs = "cr", k = 40),
 summary(modele_gam)
 ```
 
-Contrairement à la première alternative où le paramètre de lissage optimal devait être recherché manuellement
-via une grille de valeurs et la validation croisée généralisée $(\mathrm{GCV})$, la fonction $gam()$ automatise ce processus.
+Contrairement à la première alternative où le paramètre de lissage optimal devait être recherché manuellement via une grille de valeurs et la validation croisée généralisée $(\mathrm{GCV})$, la fonction $gam()$ automatise ce processus.
 
-En spécifiant $method = \text{``REML''}$, l'algorithme reformule le problème de lissage sous la forme d'un modèle mixte.
-Le paramètre de pénalité $\lambda$ est alors estimé directement, comme un ratio entre la variance du signal
-et la variance du bruit.
+En spécifiant $method = \text{``REML''}$, l'algorithme reformule le problème de lissage sous la forme d'un modèle mixte. Le paramètre de pénalité $\lambda$ est alors estimé directement, comme un ratio entre la variance du signal et la variance du bruit.
 
 Le degré de lissage optimal est ainsi obtenu en une seule étape, sans risque de sous-lissage.
-
 
 ```{r}
 # prédiction de la courbe lisse
@@ -326,18 +299,6 @@ ggplot(df_1, aes(x = Temps)) +
        y = "Variable")
 
 # summary(modele_gam)
-
-# prédiction de la courbe lisse
-df_1$Courbe_Lisse <- predict(modele_gam, newdata = df_1)
-
-# données brutes VS signal estimé : 2 semaines
-ggplot(df_1, aes(x = Temps)) +
-  geom_line(aes(y = Var), alpha = 0.3, color = "black", size = 1) +
-  geom_line(aes(y = Courbe_Lisse), color = "red", linewidth = 1.2) +
-  theme_minimal() +
-  labs(title = "Lissage semi-paramétrique d'un individu",
-       x = "Temps (Intervalles de 30 min sur 2 semaines)",
-       y = "Consommation")
 ```
 
 ```{r}
@@ -366,9 +327,6 @@ ggplot(df_1, aes(x = Temps)) +
 
 Les grandes vagues dessinées par la courbe rouge représentent le rythme quotidien de consommation du premier individu. On remarque 14 pics et 14 creux. on en déduit que les creux correspondent aux périodes de faible consommation (la nuit) et les pics les périodes de haute consommation (milieu de journée).
 
-#FCPA
-
-=======
 Après avoir testé sur un individu et visualiser la qualité du lissage, on applique à l'ensemble des n = 6291 individu.
 
 ### Application à tous les individus (pour approche 2 PCA)
@@ -389,20 +347,6 @@ idx_pb <- which(probleme_conso)
 idx_ok <- which(!probleme_conso)
 cat("Nombre d'ind avec conso constantes :", length(idx_pb),"\n")
 cat("Nombre d'ind ok :", length(idx_ok))
-```
-
-```{r}
-K <- 35 #Nombre de noeuds
-degree <- 3 #degree = m-1 = degrée des polynomes, m = 4
-m <- 4 # m=degré+1
-q <- K + degree+1 # nbasis = q = K+m = 44
-
-#objet basisfd : notre base
-base_bspline <- create.bspline.basis(
-  rangeval = c(1,p), #intervalle de définition de la base : [1:672]
-  nbasis = q, #nb total de fonctions de base
-  norder = m, #ordre des polynomes
-)
 ```
 
 ```{r, eval=FALSE}
@@ -519,8 +463,8 @@ variance_expliquee <- valeurs_propres / sum(valeurs_propres)
 pc1 <- fonctions_propres[, 1] * sqrt(p)
 pc2 <- fonctions_propres[, 2] * sqrt(p)
 
-data_plot <- data.frame(Temps = t, PC1 = pc1)
-data_plot2 <- data.frame(Temps = t, PC2 = pc2)
+data_plot <- data.frame(Temps = time, PC1 = pc1)
+data_plot2 <- data.frame(Temps = time, PC2 = pc2)
 
 
 # Variance expliquée
@@ -591,7 +535,7 @@ courbe_moyenne_bot10 <- colMeans(W[index_bas, ])
 
 #dataframe pour graphique
 df_interpretation <- data.frame(
-  Temps = rep(1:672, 3),
+  Temps = rep(time, 3),
   Activite = c(courbe_moyenne_top10, courbe_moyenne_bot10, courbe_moyenne),
   Groupe = rep(c("Top 10% (Scores PC1 forts)", 
                  "Bottom 10% (Scores PC1 faibles)", 
@@ -623,7 +567,7 @@ La FCPA décrite dans le premier point suppose que les données suivent une loi 
 qqnorm(df[,1])  
 ```
 
-On voit que les points ne s'alignent pas sur une droite. Aisni, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode GFCPA.
+On voit que les points ne s'alignent pas sur une droite. Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthod
 
 ## Préparation et méthode de binning (fenêtrage)
 
@@ -746,7 +690,7 @@ ggplot(centrale_1, aes(x = Temps)) +
 
 --\> Mettre version log ?
 
-# Cluestering
+# Clustering
 
 Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres. Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
 
@@ -768,7 +712,7 @@ Le nombre de groupes $k$ est déterminé à l’aide de deux critères compléme
 Ces deux approches permettent d’identifier un compromis entre complexité du modèle et qualité de partition.
 
 ```{r}
-# Extraction des scores des 4 premières harmoniques
+# Extraction des scores des 3 premières harmoniques
 scores_pca <- pca_res$scores[, 1:3]
 
 # Méthode du coude
@@ -864,4 +808,3 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 -   Goga, C. — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
 
 -   *Functional Data Analysis* with R -
->>>>>>> 3bc93df53e417a1cbf7c5ca22f387302a4e4a231
