@@ -410,7 +410,7 @@ Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de 
 
 ## Approche 1 : pca.fd() - package fda
 
-Cette approche consiste à d'abord lisser individuellement les courbes (section précédente), puis l'ACPF est appliquée sur l'objet fd en utilisant pca.fd(). L'opérateur de covariance est estimé à partir des coefficients B-splines des courbes lissées. (prends du temps)
+Cette approche consiste à d'abord lisser individuellement les courbes (section précédente), puis à appliquer l'ACPF evia la fonction **'pca.fd()**' du package **'fda'**. L'objet **'fd**' passé en entrée contient les coefficients B-splines $\hat \beta_i$ de chaque courbe lissée $\hat{f_i}$, ainsi que la base de B-splines commune. A partir de ces coefficients, **'pca.fd()'** estime l'opérateur de covariance C(s,t) défini récédemment, puis en extrait les fonctions propres $\phi_k$ et les scores $\xi_{ik}$ par diagonalisation.
 
 ```{r}
 # PCA fonctionnelle
