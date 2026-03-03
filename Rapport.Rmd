@@ -65,6 +65,20 @@ p <- ncol(table)
 time <- 1:p
 ```
 
+## Packages utilisés
+
+-   ***fda*** : package permettant la manipulation et création d'objets fonctionnels (fd), le lissage B-splines pénalisé (smooth.basis, fdPar) et l'ACP fonctionnelle (pca.fd).
+
+-   ***refund*** : package dédié aux méthodes de regression fonctionnelle, il fournit notamment l'algorithme FACE (fpca.face) qui estime l'opérateur de covariance par lissage direct, très efficace sur grands jeux de données.
+
+-   ***mgcv*** : package de modélisation par splines pénalisées, permet d'ajuster des modèles additifs (gam).
+
+-   ***lme4*** : package de modèles mixtes, utilisé ici pour ajuster des modèles de Poisson locaux (glmer) dans le cadre de l'approche GFPCA.
+
+-   ***cluster*** et ***factoextra*** : ces deux packages sont utilisés pour le clustering. Le premier fournit les algorithmes de classification et le deuxième permet la visualisation des résultats.
+
+-   ***ggplot2, tidyr, dplyr*** : packages utilisés pour la manipulation et visualisation des données.
+
 # Exploration des données
 
 Avant toute modélisation, on peut représenter des exemples des données brutes :
@@ -80,6 +94,8 @@ ggplot() +
 Les profils présentent une structure périodique marquée correspondant aux cycles journaliers. On observe des pics de consommation récurrents, probablement liés aux usages domestiques (matin, soir, weekends), ainsi qu’une variabilité notable entre individus.
 
 Afin de synthétiser cette information, nous calculons ensuite la courbe moyenne et la courbe médiane, plus robuste aux profils atypiques.
+
+**Remarque** : La médiane calculée ici est une médiane point par point, elle est calculée indépendamment à chaque instant t. Elle ne tient pas compte de la structure globale des courbes. Une alternative plus rigoureuse est la médiane géométrique fonctionnelle, qui peut être calculé grâce à la fonction median.fd(.) du package fda.
 
 ```{r stats}
 #Courbe moyenne et mediane
@@ -103,11 +119,11 @@ ggplot() +
   labs(title = "Consommation électrique moyenne et médiane", color="Courbe")
 ```
 
-La courbe moyenne met clairement en évidence une structure périodique régulière.On observe clairement quatorze cycles journaliers successifs.
-
-Chaque cycle présente une dynamique similaire : une phase de faible consommation nocturne suivie de pics plus marqués en journée, probablement associés aux usages domestiques (chauffage, cuisson, éclairage).
+La courbe moyenne met clairement en évidence une structure périodique régulière.On observe clairement quatorze cycles journaliers successifs. Chaque cycle présente une dynamique similaire : une phase de faible consommation nocturne suivie de pics plus marqués en journée, probablement associés aux usages domestiques (chauffage, cuisson, éclairage).
 
 La stabilité de la forme moyenne suggère que la variabilité observée entre individus porte principalement sur l’amplitude des pics plutôt que sur la structure temporelle globale.
+
+On observe aussi un écart important entre la courbe moyenne et la courbe médiane, la moyenne est environ 2 à 3 fois plus élevée que la médiane. Cela indique déjà la présence d'entreprises avec une consommation très élevée qui font augmenter la moyenne.
 
 # Vérification des valeurs manquantes
 
@@ -158,28 +174,32 @@ $$
 \hat\beta = (B^TB+ \delta P )^{-1}B^T Y_i
 $$
 
-où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t_d))$, $Y_i = (Y_{i1},...,Y_{iD})^T$ le vecteur des observations de l'entreprise i , et P est la matrice de pénalisation telle que $\beta^T P \beta = \displaystyle \int (f''_i(t))^2 dt .$
+où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t_d))$, $Y_i = (Y_{i1},...,Y_{iD})^T$ le vecteur des observations de l'entreprise i , et P est la matrice de pénalisation telle que $\beta^T P \beta = \displaystyle \int (f''_i(t))^2 dt .$ La matrice P se calcule facilement à partir des dérivées secondes des fonctions de base B-splines.
 
 ### Choix du nombre de noeuds K
 
-(à compléter et justifier -\> Règle de ruppert K =min(0.25\*D, 35) ?)
+La règle de Ruppert et al. (2002) préconise $K = min(0.25\times D, 35) = min(0.25 \times 672, 35) =  min(168.75,35) = 35$ noeuds, soit q = K + m = 39 fonctions de base. Dans gam(), nous arrondissons et utilisons le paramètre k=40, ce qui correspond à q=40, ce qui est cohérent avec la règle. De plus, le recours à la pénalisation permet d'utiliser un nombre de noeuds généreux sans risque de sur-ajustement, c'est le rôle de $\delta$.
 
-k = 40 = q -\> K = q-m = 36
+Pour construire notre base B-splines, nous utilisons la fonction **create.bspline.basis()**, du package ***fda***. On lui spécifie :
 
-Ou K = 84 (Fouad) : Le choix du nombre de fonctions de base est dicté par la nécessité de capturer les variations intra-journalières (pics de consommation du matin et du soir) sur une période de 14 jours.La consommation électrique présente au minimum deux événements majeurs par jour.
+-   rangeval = c(1,p) : l'intervalle de définiton de la base, ici [1,672]
+
+-   nbasis = q : le nombre total de fonction de base, q = K+m = 40.
+
+-   norder = m : l'ordre des polynômes m=4, correspondant à des splines cubiques (m-1=3).
 
 ```{r base_bspline}
 
 K <- 35 # Nombre de noeuds
 degree <- 3 # Degré des polynômes, m-1
-m <- 4 # Ordre (degré+1)
+#m <- 4 # Ordre (degré+1)
 q <- K + degree + 1 # nbasis = q = K+m 
 
 # Objet basisfd : notre base
 base_bspline <- create.bspline.basis(
-  rangeval = c(1, p), # Intervalle de définition de la base : [1:672]
-  nbasis = q,         # Nb total de fonctions de base
-  norder = m          # Ordre des polynômes
+  rangeval = c(1, p),
+  nbasis = q,     
+  norder = m  
 )
 ```
 
@@ -283,7 +303,7 @@ fd_final <- fd(coefs_mat, base_bspline)
 
 La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$. Le modèle est identique à l'Alternative 1. La seule différence réside dans la sélection du paramètre de lissage $\delta$ : au lieu d'une recherche manuelle par GCV, celui-ci est estimé automatiquement par la méthode REML (Restricted Maximum Likelihood) intégrée à gam(). Cette approche est plus rapide et évite de définir une grille de valeurs.
 
-On utilise la fonction $gam()$ pour ajuster les courbes lisses dans lequel on spécifie un terme de lissage utilisant des splines cubiques avec un maximum de 40 noeuds possibles.
+On utilise la fonction $gam()$ pour ajuster les courbes lisses en spécifiant un terme de lissage par splines cubiques (bs = "cr"). Le paramètre k=40 correspond à la dimension de la base q=40, cohérent avec la règle de Ruppert appliquée dans l'Alternative 1.
 
 ## Exemple sur un individu
 
