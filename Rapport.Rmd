@@ -109,7 +109,7 @@ Aucune valeur manquante n’est détectée dans la matrice de données. Il n’e
 
 L'objectif de cette partie est de passer des observations discrètes $Y_i$ à des courbes continues $\hat{f}_i$, afin de pouvoir appliquer par la suite l'ACP fonctionnelle et le clustering.
 
-Pour réaliser cette transformation, deux alternatives méthodologiques se présentent : l'approche historique de l'Analyse de Données Fonctionnelles (stricte projection sur une base de B-splines avec optimisation du paramètre de lissage par Validation Croisée) et l'approche par splines pénalisées (optimisation automatique par la méthode REML).
+Pour réaliser cette transformation, nous utilisons dans les deux cas un lissage par B-splines pénalisées. Les deux approches reposent sur la même pénalisation mais diffèrent dans la méthode de sélection du paramètre de lissage $\delta$ : par validation croisée généralisée (GCV) pour la première, et par la méthode REML (Restricted Maximum Likelihood) pour la seconde.
 
 ## Alternative 1 : Base de B-splines et Validation Croisée
 
