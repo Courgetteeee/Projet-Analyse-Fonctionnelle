@@ -796,7 +796,7 @@ df_cluster <- function(k){
 df_cluster_res <- lapply(1:4, df_cluster)
 df_cluster_res <- do.call(rbind, df_cluster_res)
 
-ggplot(df_clusters, aes(x = temps, y = conso, color = cluster)) +
+ggplot(df_cluster_res, aes(x = temps, y = conso, color = cluster)) +
   geom_line(linewidth = 1) +theme_minimal() +
   labs(title="Courbes moyennes par cluster",
        x="Temps (demi-heures)", y="Consommation", color = "")
