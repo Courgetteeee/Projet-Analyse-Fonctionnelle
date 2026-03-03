@@ -777,17 +777,42 @@ table(smart_clusters)
 km_res$tot.withinss
 ```
 
+```{r, echo=FALSE}
+#Les quatres courbes ensembles
+t_eval <- seq(1, p,length.out=500)
+
+#Fonction pour créer le data frame d'un cluster
+df_cluster <- function(k){
+  indices <- which(smart_clusters == k)
+  mu_k <- mean.fd(fd_final[indices])
+  y_mu <- as.numeric(eval.fd(t_eval, mu_k))
+  
+  #retourner dataframe
+  data.frame( temps = t_eval, conso=y_mu, cluster = factor(paste0("Cluster ", k, " (n=", length(indices), ")")))
+}
+
+
+#Appliquer la fonction précédente a chaque cluster
+df_cluster_res <- lapply(1:4, df_cluster)
+df_cluster_res <- do.call(rbind, df_cluster_res)
+
+ggplot(df_clusters, aes(x = temps, y = conso, color = cluster)) +
+  geom_line(linewidth = 1) +theme_minimal() +
+  labs(title="Courbes moyennes par cluster",
+       x="Temps (demi-heures)", y="Consommation", color = "")
+```
+
 ## Interprétation des profils types (centres des clusters)
 
 ### Sur données brutes
 
-Le **Cluster 1 (n = 5831)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard.
+Le **Cluster 1 (n = 5831)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard avec une consommation plutôt faible.
 
 Le **Cluster 2 (n = 102)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée. Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique supérieure et des fluctuations plus prononcées.
 
 Le **Cluster 3 (n = 314)** correspond à un profil de consommation plus modéré. Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2. Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
 
-Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente un niveau global distinct et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
+Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente une consommation forte et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
@@ -823,6 +848,8 @@ rect.hclust(res.cah, k = 4, border =2:5) #Encadrer les 4 groupes
 
 # Conclusion
 
+(à developper plus)
+
 Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
 
 La classification non supervisée réalisée sur les scores des quatre premières composantes a mis en évidence quatre profils distincts de consommation. La segmentation obtenue reflète principalement des différences de niveau global de consommation, avec des nuances dans la régularité et l’intensité des cycles journaliers.
@@ -834,3 +861,5 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 -   Goga, C. — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
 
 -   *Functional Data Analysis* with R -
+
+-   A COMPLETER
