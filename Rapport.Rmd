@@ -403,8 +403,10 @@ $Y_i(t) = \mu(t) + \displaystyle \sum_{k=1}^{\infty} \xi_{ik} \phi_k(t)$
 où :
 
 -   $\mu(t)$ est la courbe moyenne de la population,
--   $\phi_k(t)$ sont les fonctions propres (composantes principales fonctionnelles)
--   $\xi_{ik}$ sont les scores principaux de l'individu i sur la k-ième composante.
+-   $\phi_k(t)$ sont les fonctions propres,
+-   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenu en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent à quel point la courbe de l'individu i s'écarte de la moyenne dans la direction $\phi_k$.
+
+Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t)$. Contrairement àl'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
 
 ## Approche 1 : pca.fd() - package fda
 
