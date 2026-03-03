@@ -127,16 +127,34 @@ où $\epsilon_i$ est le bruit et $f_i$ est estimée dans une base de B-splines $
 
 -   m-1 = degré des polynômes par morceaux.
 
-La courbe s'écrit donc :
+L'estimation de la courbe s'écrit donc :
 
-$$ f_i(t) = \sum_{k=1}^{q} \beta_k B_k(t) $$
+$$ \hat{f_i}(t) = \sum_{k=1}^{q} \hat \beta_k B_k(t) $$
 
-Les coefficients $\beta_k$ sont estimés en minimisant l'erreur quadratique pénalisée :
+Les coefficients $\beta = (\beta_1, ..., \beta_q)^T$ sont estimés en minimisant l'erreur quadratique pénalisée :
 
-$$ \sum_{i,t} \left(Y_i(t) - f(t)\right)^2  \;+\; \lambda \int \left( f''(t) \right)^2 dt $$où :
+$$ \sum_{d=1}^D \left(Y_i(t_d) - f_i(t_d)\right)^2  \;+\; \delta \int \left( f''_i(t) \right)^2 dt $$où :
 
--   $\lambda \ge 0$ est le paramètre de lissage,
+-   $\delta\ge 0$ est le paramètre de lissage.
+    -   Si $\delta \to 0$, la pénalisation est nulle et le courbe risque de sur-ajuster.
+    -   Si $\delta \to +\infty$, la pénalisation domine et la courbe tend vers une droite, risque de sous-ajustement.
 -   le terme $\displaystyle \int (f''(t))^2 dt$ pénalise la rugosité de la fonction.
+
+Ainsi, la solution est donnée par :
+
+$$
+\hat\beta = (B^TB+ \delta P )^{-1}B^T Y_i
+$$
+
+où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t_d))$, $Y_i = (Y_{i1},...,Y_{iD})^T$ le vecteur des observations de l'entreprise i , et P est la matrice de pénalisation telle que $\beta^T P \beta = \displaystyle \int (f''_i(t))^2 dt .$
+
+### Choix du nombre de noeuds K
+
+(à compléter et justifier -\> Règle de ruppert K =min(0.25\*D, 35) ?)
+
+k = 40 = q -\> K = q-m = 36
+
+Ou K = 84 (Fouad) : Le choix du nombre de fonctions de base est dicté par la nécessité de capturer les variations intra-journalières (pics de consommation du matin et du soir) sur une période de 14 jours.La consommation électrique présente au minimum deux événements majeurs par jour.
 
 ```{r base_bspline}
 
@@ -255,14 +273,6 @@ La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysi
 
 On utilise la fonction $gam()$ pour ajuster les courbes lisses dans lequel on spécifie un terme de lissage utilisant des splines cubiques avec un maximum de 40 noeuds possibles.
 
-### Choix du nombre de noeuds K
-
-(à compléter et justifier -\> Règle de ruppert K =min(0.25\*D, 35) ?)
-
-k = 40 = q -\> K = q-m = 36
-
-Ou K = 84 (Fouad) : Le choix du nombre de fonctions de base est dicté par la nécessité de capturer les variations intra-journalières (pics de consommation du matin et du soir) sur une période de 14 jours.La consommation électrique présente au minimum deux événements majeurs par jour.
-
 ## Exemple sur un individu
 
 ```{r}
@@ -331,7 +341,9 @@ Après avoir testé sur un individu et visualiser la qualité du lissage, on app
 
 ### Application à tous les individus (pour approche 2 PCA)
 
-(attention certains ont des consommations nulles tout le long des deux semaines, pose problème pour cette approche, on décide donc d'enlever les individus problématiques).
+Lors de l'exploration des données, 16 entreprises ont une consommation constante sur l'ensemble des deux semaines. Parmi elles, 15 affichent une consommation nulle sur les 672 instants, et une seule présente une valeur constante non nulle égale à 9. Ces profils ont donc une variance strictement nulle, ce qui pose problème lors l'estimation du paramètre de lissage $\delta$. En effet, $gam()$ ne peut pas ajuster un modèle sans variabilité.
+
+Nous avons donc décidé d'exclure ces 16 individus de l'analyse, l'effectif final est donc n = 6275.
 
 ```{r}
 #Individu ayant un consommation nulle
