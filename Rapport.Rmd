@@ -171,7 +171,7 @@ $$ \sum_{d=1}^D \left(Y_i(t_d) - f_i(t_d)\right)^2  \;+\; \delta \int \left( f''
 Ainsi, la solution est donnée par :
 
 $$
-\hat\beta_i = (B^TB+ \delta P )^{-1}B^T Y_i
+\hat\beta = (B^TB+ \delta P )^{-1}B^T Y_i
 $$
 
 où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t_d))$, $Y_i = (Y_{i1},...,Y_{iD})^T$ le vecteur des observations de l'entreprise i , et P est la matrice de pénalisation telle que $\beta^T P \beta = \displaystyle \int (f''_i(t))^2 dt .$ La matrice P se calcule facilement à partir des dérivées secondes des fonctions de base B-splines.
@@ -459,7 +459,7 @@ saveRDS(fd_final, file = "donnees/fd_final.rds") #15-20 min
 fd_final <- readRDS("donnees/fd_final.rds")
 ```
 
-# Analyse en Composantes Principales Fonctionnelles (ACPF)
+# Analyse en Composantes Principales Fonctionnelle (ACPF)
 
 L’Analyse en Composantes Principales Fonctionnelle (FPCA) permet de résumer la variabilité des courbes $Y_i(t)$ autour de leur moyenne fonctionnelle $\mu(t)$.
 
@@ -471,11 +471,11 @@ où :
 
 -   $\mu(t)$ est la courbe moyenne de la population,
 -   $\phi_k(t)$ sont les fonctions propres,
--   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenus en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent l'écart de la courbe de l'individu i à la moyenne dans la direction $\phi_k$.
+-   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenu en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent à quel point la courbe de l'individu i s'écarte de la moyenne dans la direction $\phi_k$.
 
-Les fonctions propres $\phi_k(t)$ sont obtenues en diagonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t))$. Contrairement à l'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
+Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t)$. Contrairement àl'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
 
-**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites. Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'écart-type car toutes les mesures sont dans la même unité (la consommation électrique).
+**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites. Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'ecart-type car toutes les mesures sont dans la même unité (la consommation électrique).
 
 ## Approche 1 : pca.fd() - package fda
 
@@ -538,7 +538,9 @@ Approche, proposée par Xiao et al. (2016) repose sur une idée différente de l
 
 Cette approche est particulièrement pratique pour des grands jeux de données car elle évite n opérations de lissage individuelles.
 
-On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$ (c'est le bouquin qui dit qu'il faut le faire, jai pas trop compris pourquoi...) On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
+On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$.On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$). 
+
+Pour la suite de notre analyse, nous isolons spécifiquement les deux premières composantes principales fonctionnelles.
 
 ```{r}
 W <- as.matrix(smart.278co[idx_ok, ])
@@ -551,8 +553,6 @@ courbe_moyenne <- modele_fpca$mu
 fonctions_propres <- modele_fpca$efunctions 
 scores_individuels <- modele_fpca$scores 
 valeurs_propres <- modele_fpca$evalues   
-
-variance_expliquee <- valeurs_propres / sum(valeurs_propres)
 
 # on extrait les fonctions propres
 pc1 <- fonctions_propres[, 1] * sqrt(p)
@@ -642,6 +642,8 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
                                 "Moyenne Globale" = "black")) +
   geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
   theme_minimal() +
+  labs(title = "Interprétation Physique de la Composante 1",
+       x = "Temps (Intervalles de 30 min sur 2 semaines)")
   labs(title = "Interprétation Physique de FP1",
        x = "Temps (Intervalles de 15 min sur 1 semaine)",
        y = "Volume de la variable",
@@ -650,23 +652,107 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
 
 On déduit que la première composante agit comme un multiplicateur global sur les deux semaines. On constate que les individus du top 10% consomment massivement plus d'énergie que la moyenne. Leurs pics journaliers sont également bien plus importants. A l'inverse, la consommation du Bottom 10% semble presque plate sur l'échelle du réseau.
 
-## Interpréation de la FP2???
+## Interpréation de la PC2 
+
+```{r}
+#score de la composante 1
+scores_pc2 <- modele_fpca$scores[, 2]
+
+seuil_haut <- quantile(scores_pc2, 0.90)
+seuil_bas <- quantile(scores_pc2, 0.10)
+
+#individus extrêmes
+index_haut <- which(scores_pc2 >= seuil_haut)
+index_bas <- which(scores_pc2 <= seuil_bas)
+
+#vraies moyennes pour groupes extrêmes
+courbe_moyenne_top10 <- colMeans(W[index_haut, ])
+courbe_moyenne_bot10 <- colMeans(W[index_bas, ])
+
+#dataframe pour graphique
+df_interpretation <- data.frame(
+  Temps = rep(time, 3),
+  Activite = c(courbe_moyenne_top10, courbe_moyenne_bot10, courbe_moyenne),
+  Groupe = rep(c("Top 10% (Scores PC2 forts)", 
+                 "Bottom 10% (Scores PC2 faibles)", 
+                 "Moyenne Globale"), each = 672)
+)
+
+ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c("Top 10% (Scores PC2 forts)" = "red", 
+                                "Bottom 10% (Scores PC2 faibles)" = "blue", 
+                                "Moyenne Globale" = "black")) +
+  geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
+  theme_minimal() +
+  labs(title = "Interprétation Physique de la Composante 2",
+       x = "Temps (Intervalles de 30 min sur 2 semaines)",
+       y = "Volume de la variable",
+       subtitle = "Comment se comportent dans la vraie vie les extrêmes de la PC2 ?")
+```
+
+(INTERPRETATION)
 
 # GFCPA
 
 ## Normalité
 
-La FCPA décrite dans le premier point suppose que les données suivent une loi normale (d'après le chapite 3.2). Nous allons vérifier cette hypothèse sur le premier instant temporel :
+L'Analyse en Composantes Principales Fonctionnelle classique (appliquée précédemment) suppose que les variations autour de la moyenne suivent une loi Normale (d'après le chapitre 3.2).
+Le problème mathématique majeur de cette approche est qu'elle autorise mathématiquement des prédictions négatives. Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait
+théoriquement lui prédire une consommation de $-15$ MW, ce qui est impossible physiquement. Nous allons vérifier cette hypothèse sur le premier instant temporel :
 
 ```{r}
 qqnorm(df[,1])  
 ```
 
-On voit que les points ne s'alignent pas sur une droite. Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthod
+On voit que les points ne s'alignent pas sur une droite. Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
 
-## Préparation et méthode de binning (fenêtrage)
+##Objectif et motivations de la méthode
 
-Lobjectif est ici de préparer les données pour les algorithmes de modèles mixtes. En premier lieu nous convertissons notre data frame en format long i.e une ligne par observation temporelle par individu. Ensuite, nous appliquons la méthode du Binning : au lieu de calculer un modèle mixte pour chacun des 672 points sur 6291 individus (ce quiserait trop complexe), on regroupe les intervalles de 30mn en blocs de 4 heures (8 intervalles).
+L'objectif de la GFPCA est d'extraire les profils types de consommation électrique d'un très grand nombre de courbes, en passant par un espace latent (caché), afin de garantir que le lissage mathématique respecte parfaitement la nature physique et probabiliste des données.
+
+Le problème mathématique majeur de la FCPA classique est qu'elle autorise mathématiquement des prédictions négatives.
+Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait
+théoriquement lui prédire une consommation de $-15$ MW, ce qui constitue une aberration physique.
+
+Pour respecter la nature de nos données (une consommation étant assimilable à un comptage
+strictement positif ou nul), nous adoptons le cadre de la Fast Generalized FPCA $(\mathrm{FGFPCA})$.
+Cette méthode s'appuie sur des Modèles Mixtes Linéaires Généralisés $(\mathrm{GLMM})$ utilisant une loi de Poisson avec un lien logarithmique.
+
+Un modèle mixte est particulièrement adapté ici car il décompose la variance en deux composantes :
+
+$\textbf{Un effet fixe}$ : qui modélise le comportement moyen global du réseau.
+
+$\textbf{Des effets aléatoires}$ : qui estiment la déviation latente spécifique à chaque individu
+par rapport à la moyenne. Ce sont ces effets aléatoires qui serviront de base à notre nouvelle FPCA.
+
+En utilisant un Modèle Mixte de Poisson avec un lien logarithmique, la GFPCA garantit que la prédiction sera construite sur l'exponentielle du signal latent, et donc strictement positive ou nulle.
+Ce modèle s'écrit mathématiquement comme suit : 
+
+Pour la fenêtre temporelle $j$, on modélise la production $Y_{ij}$ de la centrale $i$ par :
+
+$Y_{ij} \sim \mathcal{P}(\mu_{ij})$
+
+$\log(\mu_{ij}) = \beta_0 + b_{ij}$
+
+Où $\mu_{ij}$ est la consommation moyenne théorique de la centrale $i$ durant la fenêtre temporelle $j$, $\beta_0$ est l'intercepte fixe (la moyenne globale) et $b_{ij}$ est l'effet aléatoire (la déviation latente propre à la centrale $i$).
+
+## Etapes de la Fast GFCPA
+
+### Étape 1 : Préparation et binning (fenêtrage)
+
+L'implémentation de cette modélisation rigoureuse impose deux ajustements informatiques majeurs
+avant de lancer les calculs :
+
+Contrairement à $fpca.face()$ qui accepte une matrice de données globale, les algorithmes de modèles mixtes (comme la fonction $glmer()$ que nous utilisons en pratique) exigent des données au format long.
+Nous convertissons donc notre dataframe pour obtenir une seule ligne par observation temporelle
+et par individu, soit $6\,291$ individus $\times$ $672$ points, c'est-à-dire plus de $4{,}2$ millions de lignes.
+
+Résoudre des modèles mixtes de Poisson sur $4{,}2$ millions de lignes pour chacun des $672$ points temporels nécessite une puissance de calcul colossale qui ferait échouer l'algorithme.
+Pour contourner cette contrainte informatique, nous appliquons la méthode du binning : nous regroupons le temps par fenêtres locales (par exemple ici des blocs de $4$ heures, soit $8$ intervalles de $30$ minutes).
+
+L'objectif est d'estimer rapidement le signal latent de chaque entreprise sur ces blocs réduits,
+avant d'appliquer un lissage global continu à l'étape suivante.
 
 ```{r}
 p <- 672
@@ -687,17 +773,12 @@ df_long <- df_long %>%
 centres_fenetres <- unique(df_long$Fenetre)
 ```
 
-## Modèles mixtes locaux
+## Estimation latente via modèles mixtes locaux
 
-Pour chaque bloc de 4 heures on isole les données et on ajuste un modèle mixte grâce à la fonction $glmer()$. Puisque nous traitons des données semblables à des données de "comptage", nous utilisons la loi de Poisson avec un lien logarithmique ($family = poisson(link="log")$). La valeur extraite pour chaque centrale est son effet aléatoire i.e son écart latent par rapport à la moyenne à la moyenne du réseau durant ces 4 heures.
+Pour chaque bloc de 4 heures on isole les données et on ajuste un modèle mixte grâce à la fonction $glmer()$ (issue du package $lme4$).
+Le modèle sépare l'effet fixe (la consommation moyenne de tous les individus durant ces 4 heures) de l'effet aléatoire (le décalage propre de chaqur individu). Cet effet aléatoire est notre signal latent, ce qui nous permet de compresser nos données brutes bruitées en une petite matrice d'effets aléatoires.
 
-Pour la fenêtre temporelle $j$, on modélise la production $Y_{ij}$ de la centrale $i$ par :
-
-$Y_{ij} \sim \mathcal{P}(\mu_{ij})$
-
-$\log(\mu_{ij}) = \beta_0 + b_{ij}$
-
-Où $\mu_{ij}$ est la consommation moyenne théorique de la centrale $i$ durant la fenêtre temporelle $j$, $\beta_0$ est l'intercepte fixe (la moyenne globale) et $b_{ij}$ est l'effet aléatoire (la déviation latente propre à la centrale $i$).
+Puisque nous traitons des données semblables à des données de "comptage", nous utilisons la loi de Poisson avec un lien logarithmique ($family = poisson(link="log")$). La valeur extraite pour chaque centrale est son effet aléatoire i.e son écart latent par rapport à la moyenne à la moyenne du réseau durant ces 4 heures.
 
 Pour extraire les effets aléatoires de chaque modèle on utilise la fonction $ranef()$.
 
@@ -717,17 +798,27 @@ for (j in 1:length(centres_fenetres)) {
 }
 ```
 
-Nous allons maintenant lisser les signaux latents obtenus par fenêtres pour retrouver des profils de consommation continus sur les deux semaines entières. Pour cela, nous appliquons la FCPA classique sur la matrice des effets aléatoires pour lisser les sauts entre les fenêtres de 4h. Une fois les fonctions propres $\phi_k$ extraites nous les interpolons pour repasser à 672 intervalles de 30mn.
+### Application de la FCPA sur l'espace latent
 
-La décomposition des signaux latents lissés s'écrit comme suit :
+Nous prenons la matrice des signaux latents obtenus à la précédente étape et on lui applique une FCPA classique via la fonction $fpca.face$.
+En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on s'arrêtait là, la courbe ferait des sauts en escalier. Appliquer une FPCA va permettre de lier ces fenêtres entre elles et d'extraire les fonctions propres $\phi_k$ de notre réseau. 
 
 ```{r}
 # fcpa classique aux signaux latents
 fpca_latente <- fpca.face(Y = matrice_effets_locaux, pve = 0.95)
+```
 
+### Interpolation et Modèle Additif Global
+
+En soit, nous aurions pu nous arrêter à l'étape 3 en extrayant les scores et les fonctions propres du modèle FPCA latent. Mais cette quatrième étape est très importante dans le sens où elle permet de redessiner les courbes, de vérifier visuellement le résultat (i.e que les scores captent bien les tendances).
+
+On réinterpole les courbes $\phi_k$ de l'étape 3 pour qu'elles aient de nouveau 672 points. Pour cela, nous utilisons la fonction $approx()$ qui réalise une interpolation temporelle linéaire pour combler les trous et étirer ces courbes sur la grille initiale    
+
+```{r}
+# nombre total de composantes
 K <- ncol(fpca_latente$efunctions)
 
-#interpolation des composantes piur repasser aux fenêtres de 30mn 
+#interpolation des composantes pour repasser aux fenêtres de 30mn 
 fonctions_propres_interpolees <- matrix(NA, nrow = p, ncol = K)
 for (k in 1:K) {
   fonctions_propres_interpolees[, k] <- approx(x = centres_fenetres, 
@@ -743,6 +834,8 @@ for(k in 1:K) {
 D'après le chapitre 3.2, le binning a tendance à trop lisser les différences entre les individus. Pour corriger cela, nous lançons un grand modèle additif final (via la fonction $bam()$, une version de $gam()$ pour les grands jeux de données) défini par : $$\log(\mu_{i}(t)) = f(t) + \xi_{i1}\phi_1(t) + \xi_{i2}\phi_2(t)$$
 
 Où $f(t)$ est la fonction lisse moyenne globale, et $\xi_{i1}, \xi_{i2}$ sont les scores ré-estimés de manière optimale pour chaque centrale.
+
+Ce grand modèle $bam$ permet en interne de réajuster finement les scores de chaque centrale pour qu'ils soient parfaits.
 
 ```{r}
 #on echantillonne pour que ça prenne moins de temps à compiler
@@ -768,6 +861,8 @@ df_long_echantillon$Production_Lissee <- predict(modele_final,
                                                  newdata = df_long_echantillon, type = "response")
 ```
 
+On regarde la courbe lissée par Fast GFCPA sur le premier individu :
+
 ```{r}
 # On isole la centrale n°1 pour comparer les données brutes et le lissage GFPCA
 centrale_1 <- subset(df_long_echantillon, ID == 1)
@@ -780,6 +875,8 @@ ggplot(centrale_1, aes(x = Temps)) +
        x = "Temps (Intervalles de 30 min)",
        y = "Consommation (MW)") 
 ```
+
+Nous voyons que la courbe verte suit bien les tendances du nuage de points, ce qui démontre le bon fonctionnement de notre modèle. 
 
 ### Comparaison des deux approches :
 
@@ -826,6 +923,8 @@ Décision : Nous retenons k=4 clusters. Ce choix offre un excellent compromis en
 
 ## Application de l'algorithme K-means
 
+ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA. Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA. Nous allons ensuite utiliser la fonction $kmeans$. On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
+
 ```{r}
 set.seed(123)
 
@@ -841,67 +940,85 @@ print(table(as.factor(smart_clusters)))
 
 ## **Visualisation et Interprétation des profils types**
 
-Afin d’interpréter les groupes obtenus par K-means, nous représentons la courbe moyenne de consommation associée à chaque cluster. Cette moyenne fonctionnelle est calculée à partir des fonctions lissées des individus appartenant au même groupe.
 
-Cette visualisation permet d’identifier les différences structurelles entre profils et de relier la classification aux variations capturées par l’ACP fonctionnelle.
+Maintenant que nous savons quelle centrale appartient au groupe 1,2,3 ou 4, nous retournons dans notre matrice d'origine $W$ et pour chaque groupe, nous calculons la moyenne colonne par colonne (instant par instant) pour tracer la période type de ce groupe.
 
 ```{r}
-# Calcul des moyennes par cluster
-# On utilise les données log pour la visualisation des profils types
-par(mfrow=c(2,2))
-for(i in 1:4){
+#matrice qui stocke les profils
+courbes_clusters <- matrix(NA, nrow = clusters, ncol = p)
 
-  indices <- which(smart_clusters == i)
-  mean_cluster <- mean.fd(fd_final[indices])
-  plot(mean_cluster,
-       main = paste("Cluster", i, "(n =", length(indices), ")"),
-       ylab = "log(1+Conso)",
-       xlab = "Temps (jours)")
+#vraie moyenne par groupe
+for(c in 1:clusters) {
+  courbes_clusters[c, ] <- colMeans(W[affectation_clusters == c, ])
 }
-table(smart_clusters)
-km_res$tot.withinss
+
+df_clusters <- data.frame(
+  Temps = rep(1:p, times = clusters),
+  Production = as.vector(t(courbes_clusters)),
+  Famille = as.factor(rep(paste("Famille", 1:clusters), each = p))
+)
 ```
 
+Nous visualisons maintenant les courbes moyennes par famille :
+
 ```{r, echo=FALSE}
-#Les quatres courbes ensembles
-t_eval <- seq(1, p,length.out=500)
-
-#Fonction pour créer le data frame d'un cluster
-df_cluster <- function(k){
-  indices <- which(smart_clusters == k)
-  mu_k <- mean.fd(fd_final[indices])
-  y_mu <- as.numeric(eval.fd(t_eval, mu_k))
-  
-  #retourner dataframe
-  data.frame( temps = t_eval, conso=y_mu, cluster = factor(paste0("Cluster ", k, " (n=", length(indices), ")")))
-}
-
-
-#Appliquer la fonction précédente a chaque cluster
-df_cluster_res <- lapply(1:4, df_cluster)
-df_cluster_res <- do.call(rbind, df_cluster_res)
-
-ggplot(df_cluster_res, aes(x = temps, y = conso, color = cluster)) +
-  geom_line(linewidth = 1) +theme_minimal() +
-  labs(title="Courbes moyennes par cluster",
-       x="Temps (demi-heures)", y="Consommation", color = "")
+ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
+  theme_minimal() +
+  labs(title = "Clustering Fonctionnel",
+       x = "Temps (Intervalles de 30 min sur 2 semaines)",
+       y = "Consommation Électrique Moyenne (MW)" +
+  theme(legend.position = "bottom")) 
 ```
 
 ## Interprétation des profils types (centres des clusters)
 
 ### Sur données brutes
 
-Le **Cluster 1 (n = 5831)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard avec une consommation plutôt faible.
+Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard avec une faible consommation.
 
-Le **Cluster 2 (n = 102)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée. Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique supérieure et des fluctuations plus prononcées.
+Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée. Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
 
-Le **Cluster 3 (n = 314)** correspond à un profil de consommation plus modéré. Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2. Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
+Le **Cluster 3 (n = 310)** correspond à un profil de consommation plus modéré. Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2. Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
 
-Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente une consommation forte et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
+Enfin, le **Cluster 4 (n = 103)**, très minoritaire, présente une consommation forte et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
+### Sur données log(1+Conso) (à titre de comparaison)
+
+Le **Cluster 1 (n = 1054)** correspond aux profils présentant le niveau global de consommation le plus faible de l’échantillon. Les cycles journaliers sont visibles mais d’amplitude modérée, avec une structure régulière sur l’ensemble des 14 jours. Ce groupe regroupe donc les foyers caractérisés par une faible intensité énergétique globale.
+
+Le **Cluster 2 (n = 498)** rassemble les profils les plus énergivores. La courbe moyenne se situe nettement au-dessus des autres groupes et présente des pics journaliers marqués, traduisant une forte amplitude intra-journalière. Ce cluster correspond aux consommateurs présentant la plus grande variabilité et le niveau moyen le plus élevé.
+
+Le **Cluster 3 (n = 2110)** représente un profil intermédiaire stable. Les cycles quotidiens sont bien définis et réguliers sur toute la période, avec un niveau de consommation moyen situé entre les clusters 1 et 2.
+
+Enfin, le **Cluster 4 (n = 2629)**, le plus important numériquement, présente un niveau global proche du cluster 3 mais avec une variabilité légèrement plus marquée au cours du temps. Les amplitudes journalières sont comparables, mais la dynamique apparaît moins régulière d’un jour à l’autre, traduisant une hétérogénéité temporelle plus prononcée.
+
+Globalement, la segmentation obtenue met principalement en évidence une différenciation selon le niveau global de consommation, avec des nuances dans l’intensité et la régularité des cycles journaliers.
+
+## Classification Ascendante Hiérarchique (CAH) (peut être à supprimer)
+
+Afin de confirmer la structure de groupe identifiée par la méthode du coude, nous réalisons une Classification Ascendante Hiérarchique sur les scores des 4 premières harmoniques. Nous utilisons la distance euclidienne et le critère de Ward, qui minimise la variance intra-classe à chaque étape de regroupement. 
+
+```{r}
+#Calcul de la matrice distance
+d<-dist(scores_pca, method = "euclidean")
+
+#Application méthode  Ward
+res.cah <- hclust(d, method = "ward.D2")
+
+#Visualisation dendrogramme
+plot(res.cah, labels = FALSE, main = "Dendrogramme de la CAH", sub = "", xlab = "")
+rect.hclust(res.cah, k = 4, border =2:5) #Encadrer les 4 groupes
+```
+
+**Analyse du dendrogramme** (à refaire)
+
 # Conclusion
+
+(à developper plus)
 
 Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
 
@@ -914,7 +1031,5 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 -   Goga Camélia — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
 
 -   Ciprian M. Crainiceanu, Jeff Goldsmith, Andrew Leroux, Erjia Cui *— Functional Data Analysis with R*
-
--   Jean-Marc Lasgouttes, Analyse fonctionnelle de données, Inria Paris. in (<https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/mastere-esd/fda/>)
 
 -   Julien Jacques, Cristian Preda — *Functional Data clustering : a survey*
