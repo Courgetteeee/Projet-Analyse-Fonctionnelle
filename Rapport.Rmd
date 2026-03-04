@@ -943,8 +943,8 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 
 # Références
 
--   Goga, C. — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
+-   Goga Camélia — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
 
--   *Functional Data Analysis* with R -
+-   Ciprian M. Crainiceanu, Jeff Goldsmith, Andrew Leroux, Erjia Cui *— Functional Data Analysis with R*
 
--   A COMPLETER
+-   Julien Jacques, Cristian Preda — *Functional Data clustering : a survey*
