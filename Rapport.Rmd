@@ -808,6 +808,29 @@ En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on 
 fpca_latente <- fpca.face(Y = matrice_effets_locaux, pve = 0.95)
 ```
 
+```{r}
+fpca_pour_plot <- fpca.face(Y = matrice_effets_locaux, npc = 10)
+
+valeurs_propres <- fpca_pour_plot$evalues
+
+# Calcul des pourcentages par rapport à la variance totale
+variance_expliquee <- (valeurs_propres / sum(valeurs_propres)) * 100
+variance_cumulee <- cumsum(variance_expliquee)
+
+#index de la composante qui fait dépasser les 95% de variance expliquée
+nb_pc_95 <- which(variance_cumulee >= 95)[1]
+
+#on ne garde que les composantes qui expliquent au moins 95% de variance
+df_variance <- data.frame(
+  Composante = as.factor(1:nb_pc_95),
+  Variance = variance_expliquee[1:nb_pc_95],
+  Variance_Cumulee = variance_cumulee[1:nb_pc_95]
+)
+
+print(df_variance)
+```
+
+
 ### Interpolation et Modèle Additif Global
 
 En soit, nous aurions pu nous arrêter à l'étape 3 en extrayant les scores et les fonctions propres du modèle FPCA latent. Mais cette quatrième étape est très importante dans le sens où elle permet de redessiner les courbes, de vérifier visuellement le résultat (i.e que les scores captent bien les tendances).
@@ -859,7 +882,9 @@ modele_final <- bam(Production ~ s(Temps, bs = "cc", k = 40) +
 #prédiction lissée
 df_long_echantillon$Production_Lissee <- predict(modele_final, 
                                                  newdata = df_long_echantillon, type = "response")
+
 ```
+
 
 On regarde la courbe lissée par Fast GFCPA sur le premier individu :
 
