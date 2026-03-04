@@ -643,9 +643,7 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
   geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
   theme_minimal() +
   labs(title = "Interprétation Physique de la Composante 1",
-       x = "Temps (Intervalles de 30 min sur 2 semaines)")
-  labs(title = "Interprétation Physique de FP1",
-       x = "Temps (Intervalles de 15 min sur 1 semaine)",
+       x = "Temps (Intervalles de 30 min sur 2 semaines)",
        y = "Volume de la variable",
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la FP1 ?")
 ```
@@ -744,7 +742,11 @@ Où $\mu_{ij}$ est la consommation moyenne théorique de la centrale $i$ durant 
 L'implémentation de cette modélisation rigoureuse impose deux ajustements informatiques majeurs
 avant de lancer les calculs :
 
+<<<<<<< HEAD
 Contrairement à $fpca.face()$ qui accepte une matrice de données globale, les algorithmes de modèles mixtes (comme la fonction $glmer()$ que nous utilisons en pratique) exigent des données au format long.
+=======
+Contrairement à $fpca.face()$ qui accepte une matrice de données globale, les algorithmes de modèles mixtes (comme la fonction $glmer()$ que nous utiliserons en pratique) exigent des données au format long.
+>>>>>>> ea875bc (Explication des étapes de la GFCPA (étape 1 et 2))
 Nous convertissons donc notre dataframe pour obtenir une seule ligne par observation temporelle
 et par individu, soit $6\,291$ individus $\times$ $672$ points, c'est-à-dire plus de $4{,}2$ millions de lignes.
 
@@ -799,6 +801,11 @@ for (j in 1:length(centres_fenetres)) {
 ```
 
 ### Application de la FCPA sur l'espace latent
+<<<<<<< HEAD
+=======
+
+Nous allons maintenant lisser les signaux latents obtenus par fenêtres pour retrouver des profils de consommation continus sur les deux semaines entières. Pour cela, nous appliquons la FCPA classique sur la matrice des effets aléatoires pour lisser les sauts entre les fenêtres de 4h. Une fois les fonctions propres $\phi_k$ extraites nous les interpolons pour repasser à 672 intervalles de 30mn.
+>>>>>>> ea875bc (Explication des étapes de la GFCPA (étape 1 et 2))
 
 Nous prenons la matrice des signaux latents obtenus à la précédente étape et on lui applique une FCPA classique via la fonction $fpca.face$.
 En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on s'arrêtait là, la courbe ferait des sauts en escalier. Appliquer une FPCA va permettre de lier ces fenêtres entre elles et d'extraire les fonctions propres $\phi_k$ de notre réseau. 
