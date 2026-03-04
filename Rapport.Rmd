@@ -3,6 +3,9 @@ title: "Statistiques Fonctionnelles"
 author: "CARLU Jonas, AFANE Fouad, LANCON Cindy"
 date: "2026-02-24"
 output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +33,8 @@ library(factoextra)
 
 # Introduction
 
-Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de mesure espacés de 30 minutes sur deux semaines consécutives. On note i = 1,...,n, l'indice d'une entreprise et $t\in[1,672]$ l'instant de mesure.
+Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de mesure espacés de 30 minutes sur deux semaines consécutives.
+On note i = 1,...,n, l'indice d'une entreprise et $t\in[1,672]$ l'instant de mesure.
 
 Les données présentent plusieurs propriétés qui justifient une approche par statistiques fonctionnelles :
 
@@ -42,9 +46,12 @@ Les données présentent plusieurs propriétés qui justifient une approche par 
 
 -   **Régularité** : la fonction $f_i$ est supposée suffisamment lisse et ne varie pas brutalement pour des petites variations de t.
 
--   **Colocalisation** : chaque instant $t$ a la même interprétation pour toutes les entreprises. Par exemple, t=48 correspond toujours à la fin du premier jour pour tous les individus.
+-   **Colocalisation** : chaque instant $t$ a la même interprétation pour toutes les entreprises.
+    Par exemple, t=48 correspond toujours à la fin du premier jour pour tous les individus.
 
-Ces propriétés nous amènent à considérer chaque ligne du jeu de données non pas comme un vecteur de $\mathbb{R}^D$, mais comme la discrétisation d'une fonction de consommation évoluant dans le temps. Nous adaptons donc une approche de Statistiques Fonctionnelles (FDA). L'analyse reposera sur trois étapes principales :
+Ces propriétés nous amènent à considérer chaque ligne du jeu de données non pas comme un vecteur de $\mathbb{R}^D$, mais comme la discrétisation d'une fonction de consommation évoluant dans le temps.
+Nous adaptons donc une approche de Statistiques Fonctionnelles (FDA).
+L'analyse reposera sur trois étapes principales :
 
 -   Reconstruction des courbes continues par lissage B-splines pénalisé.
 -   Mise en oeuvre d'une Analyse en Composantes Principales Fonctionnelle (ACP fonctionnelle), afin de résumer la variabilité des courbes et d'identifier les principaux modes de variation des profils de consommation.
@@ -75,7 +82,8 @@ time <- 1:p
 
 -   ***lme4*** : package de modèles mixtes, utilisé ici pour ajuster des modèles de Poisson locaux (glmer) dans le cadre de l'approche GFPCA.
 
--   ***cluster*** et ***factoextra*** : ces deux packages sont utilisés pour le clustering. Le premier fournit les algorithmes de classification et le deuxième permet la visualisation des résultats.
+-   ***cluster*** et ***factoextra*** : ces deux packages sont utilisés pour le clustering.
+    Le premier fournit les algorithmes de classification et le deuxième permet la visualisation des résultats.
 
 -   ***ggplot2, tidyr, dplyr*** : packages utilisés pour la manipulation et visualisation des données.
 
@@ -91,11 +99,14 @@ ggplot() +
   labs(x = "Temps", y = "Consommation", title = "Profil individuel de consommation")
 ```
 
-Les profils présentent une structure périodique marquée correspondant aux cycles journaliers. On observe des pics de consommation récurrents, probablement liés aux usages domestiques (matin, soir, weekends), ainsi qu’une variabilité notable entre individus.
+Les profils présentent une structure périodique marquée correspondant aux cycles journaliers.
+On observe des pics de consommation récurrents, probablement liés aux usages domestiques (matin, soir, weekends), ainsi qu’une variabilité notable entre individus.
 
 Afin de synthétiser cette information, nous calculons ensuite la courbe moyenne et la courbe médiane, plus robuste aux profils atypiques.
 
-**Remarque** : La médiane calculée ici est une médiane point par point, elle est calculée indépendamment à chaque instant t. Elle ne tient pas compte de la structure globale des courbes. Une alternative plus rigoureuse est la médiane géométrique fonctionnelle, qui peut être calculé grâce à la fonction median.fd(.) du package fda.
+**Remarque** : La médiane calculée ici est une médiane point par point, elle est calculée indépendamment à chaque instant t.
+Elle ne tient pas compte de la structure globale des courbes.
+Une alternative plus rigoureuse est la médiane géométrique fonctionnelle, qui peut être calculé grâce à la fonction median.fd(.) du package fda.
 
 ```{r stats}
 #Courbe moyenne et mediane
@@ -119,11 +130,13 @@ ggplot() +
   labs(title = "Consommation électrique moyenne et médiane", color="Courbe")
 ```
 
-La courbe moyenne met clairement en évidence une structure périodique régulière.On observe clairement quatorze cycles journaliers successifs. Chaque cycle présente une dynamique similaire : une phase de faible consommation nocturne suivie de pics plus marqués en journée, probablement associés aux usages domestiques (chauffage, cuisson, éclairage).
+La courbe moyenne met clairement en évidence une structure périodique régulière.On observe clairement quatorze cycles journaliers successifs.
+Chaque cycle présente une dynamique similaire : une phase de faible consommation nocturne suivie de pics plus marqués en journée, probablement associés aux usages domestiques (chauffage, cuisson, éclairage).
 
 La stabilité de la forme moyenne suggère que la variabilité observée entre individus porte principalement sur l’amplitude des pics plutôt que sur la structure temporelle globale.
 
-On observe aussi un écart important entre la courbe moyenne et la courbe médiane, la moyenne est environ 2 à 3 fois plus élevée que la médiane. Cela indique déjà la présence d'entreprises avec une consommation très élevée qui font augmenter la moyenne.
+On observe aussi un écart important entre la courbe moyenne et la courbe médiane, la moyenne est environ 2 à 3 fois plus élevée que la médiane.
+Cela indique déjà la présence d'entreprises avec une consommation très élevée qui font augmenter la moyenne.
 
 # Vérification des valeurs manquantes
 
@@ -131,19 +144,22 @@ On observe aussi un écart important entre la courbe moyenne et la courbe média
 sum(is.na(table))
 ```
 
-Aucune valeur manquante n’est détectée dans la matrice de données. Il n’est donc pas nécessaire d’effectuer une étape d’imputation ou de reconstruction préalable.
+Aucune valeur manquante n’est détectée dans la matrice de données.
+Il n’est donc pas nécessaire d’effectuer une étape d’imputation ou de reconstruction préalable.
 
 # Lissage semi-paramétrique
 
 L'objectif de cette partie est de passer des observations discrètes $Y_i$ à des courbes continues $\hat{f}_i$, afin de pouvoir appliquer par la suite l'ACP fonctionnelle et le clustering.
 
-Pour réaliser cette transformation, nous utilisons dans les deux cas un lissage par B-splines pénalisées. Les deux approches reposent sur la même pénalisation mais diffèrent dans la méthode de sélection du paramètre de lissage $\delta$ : par validation croisée généralisée (GCV) pour la première, et par la méthode REML (Restricted Maximum Likelihood) pour la seconde.
+Pour réaliser cette transformation, nous utilisons dans les deux cas un lissage par B-splines pénalisées.
+Les deux approches reposent sur la même pénalisation mais diffèrent dans la méthode de sélection du paramètre de lissage $\delta$ : par validation croisée généralisée (GCV) pour la première, et par la méthode REML (Restricted Maximum Likelihood) pour la seconde.
 
 ## Alternative 1 : Base de B-splines et Validation Croisée
 
 Les données de consommation de chaque entreprise i sont observées aux instants discrétisés $t_1,...,t_D$, avec D= 672 points qui sont équidistants espacés de 30 minutes sur deux semaines.
 
-L'objectif de cette partie est donc de passer des observations discrètes et bruitées $Y_i$, aux véritables courbes continues $\hat{f_i}$. En effet, les données brutes comportent du bruit de mesure qui empêche de comparer les individus point par point.
+L'objectif de cette partie est donc de passer des observations discrètes et bruitées $Y_i$, aux véritables courbes continues $\hat{f_i}$.
+En effet, les données brutes comportent du bruit de mesure qui empêche de comparer les individus point par point.
 
 Pour chaque entreprise i, on pose le modèle :
 
@@ -178,9 +194,12 @@ où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t
 
 ### Choix du nombre de noeuds K
 
-La règle de Ruppert et al. (2002) préconise $K = min(0.25\times D, 35) = min(0.25 \times 672, 35) =  min(168.75,35) = 35$ noeuds, soit q = K + m = 39 fonctions de base. Dans gam(), nous arrondissons et utilisons le paramètre k=40, ce qui correspond à q=40, ce qui est cohérent avec la règle. De plus, le recours à la pénalisation permet d'utiliser un nombre de noeuds généreux sans risque de sur-ajustement, c'est le rôle de $\delta$.
+La règle de Ruppert et al. (2002) préconise $K = min(0.25\times D, 35) = min(0.25 \times 672, 35) =  min(168.75,35) = 35$ noeuds, soit q = K + m = 39 fonctions de base.
+Dans gam(), nous arrondissons et utilisons le paramètre k=40, ce qui correspond à q=40, ce qui est cohérent avec la règle.
+De plus, le recours à la pénalisation permet d'utiliser un nombre de noeuds généreux sans risque de sur-ajustement, c'est le rôle de $\delta$.
 
-Pour construire notre base B-splines, nous utilisons la fonction **create.bspline.basis()**, du package ***fda***. On lui spécifie :
+Pour construire notre base B-splines, nous utilisons la fonction **create.bspline.basis()**, du package ***fda***.
+On lui spécifie :
 
 -   rangeval = c(1,p) : l'intervalle de définiton de la base, ici [1,672]
 
@@ -203,13 +222,17 @@ base_bspline <- create.bspline.basis(
 )
 ```
 
-Soit $\delta$ le paramètre de lissage utilisé dans la reconstruction d'une courbe $Y_i$. Il peut être sélectionné en minimisant le critère de validation croisée généralisée (GCV).
+Soit $\delta$ le paramètre de lissage utilisé dans la reconstruction d'une courbe $Y_i$.
+Il peut être sélectionné en minimisant le critère de validation croisée généralisée (GCV).
 
-Nous calculons donc le $\delta^*$ optimal pour chaque individu séparément en balayant une grille de valeurs $[10{-5}, 10^5]$. Une approche individuelle est plus rigoureuse qu'un $\delta$ commun car les entreprises peuvent avoir des profils de consommation très différents.
+Nous calculons donc le $\delta^*$ optimal pour chaque individu séparément en balayant une grille de valeurs $[10{-5}, 10^5]$.
+Une approche individuelle est plus rigoureuse qu'un $\delta$ commun car les entreprises peuvent avoir des profils de consommation très différents.
 
 Pour chaque valeur de $\delta$, la fonction **fdPar()** du package ***fda*** crée un objet de paramètres fonctionnels encodant la base B-splines (base_bspline), l'ordre de dérivation utilisé pour la pénalisation (Lfdobj=2, correspondant à la dérivée seconde $f_i''$), et la valeur du paramètre de lissage $\delta$.
 
-La fonction **smooth.basis()** va prendre en entrée les instants (times = [1:672]), les observations brutes $y_i$ et l'objet fdpPar contenant la base et le paramètre de pénalisation. Elle résout le critère pénalisé et retourne un objet contenant la courbe lisée $\hat{f_i}$ sous forme de coefficients B-splines, ainsi que la valeur du critère GCV. Le $\delta^*$ optimal est celui qui minise ce critère.
+La fonction **smooth.basis()** va prendre en entrée les instants (times = [1:672]), les observations brutes $y_i$ et l'objet fdpPar contenant la base et le paramètre de pénalisation.
+Elle résout le critère pénalisé et retourne un objet contenant la courbe lisée $\hat{f_i}$ sous forme de coefficients B-splines, ainsi que la valeur du critère GCV.
+Le $\delta^*$ optimal est celui qui minise ce critère.
 
 Deux fonctions sont définies :
 
@@ -296,15 +319,19 @@ ggplot(df_i_fda, aes(x = temps)) +
 
 Nous pouvons maintenant, de la même façon, l'appliquer à l'ensemble des individu (utilisé pour l'approche 2 PCA).
 
-Cependant, le calcul du $\delta^*$ pour chaque individu étant couteux en temps de calcul (environ 10-15 min pour les n=6 291 entreprises), les résultats sont calculés une seule fois et sauvegardés dans un fichier .rds. Ils sont ensuite rechargés directement à chaque compilation du rapport.
+Cependant, le calcul du $\delta^*$ pour chaque individu étant couteux en temps de calcul (environ 10-15 min pour les n=6 291 entreprises), les résultats sont calculés une seule fois et sauvegardés dans un fichier .rds.
+Ils sont ensuite rechargés directement à chaque compilation du rapport.
 
 ```{r, eval=FALSE}
 deltas_res <- sapply(1:n, delta_opt_i)
 ```
 
-Une fois les $\delta^*_i$ chargés, la fonction lisser_i() applique le lissage B-splines à chaque individu avec son paramètre optimal. Smooth.basis() retourne un objet fd par individu, c'est à dire n objets séparés. Or pca.fd() nécessite un seul objet fd contenant toutes les courbes.
+Une fois les $\delta^*_i$ chargés, la fonction lisser_i() applique le lissage B-splines à chaque individu avec son paramètre optimal.
+Smooth.basis() retourne un objet fd par individu, c'est à dire n objets séparés.
+Or pca.fd() nécessite un seul objet fd contenant toutes les courbes.
 
-Nous allons donc extraire les matrices de coefficients B-splines de chaque courbe lissée et les rassembler dans un unique objet fd via la fonction **fd(),** qui encode à la fois les coefficients$\beta_i$ de chaque individu et la base commune. C'est l'objet fd_final qui sera utilisé dans toute la suite de l'analyse.
+Nous allons donc extraire les matrices de coefficients B-splines de chaque courbe lissée et les rassembler dans un unique objet fd via la fonction **fd(),** qui encode à la fois les coefficients$\beta_i$ de chaque individu et la base commune.
+C'est l'objet fd_final qui sera utilisé dans toute la suite de l'analyse.
 
 ```{r}
 #Lecture des deltas optimaux
@@ -333,11 +360,16 @@ fd_final <- fd(coefs_mat, base_bspline)
 
 ## Alternative 2 : Splines Pénalisées et modèle GAM
 
-La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$. Le modèle est identique à l'Alternative 1. La seule différence réside dans la sélection du paramètre de lissage $\delta$ : au lieu d'une recherche manuelle par GCV sur une grille de valeur, celui-ci est estimé automatiquement par la méthode REML (Restricted Maximum Likelihood) intégrée à gam().
+La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$.
+Le modèle est identique à l'Alternative 1.
+La seule différence réside dans la sélection du paramètre de lissage $\delta$ : au lieu d'une recherche manuelle par GCV sur une grille de valeur, celui-ci est estimé automatiquement par la méthode REML (Restricted Maximum Likelihood) intégrée à gam().
 
 (petit passage sur méthode REML ?)
 
-On utilise la fonction $gam()$ du package **mgcv,** qui ajuste des modèles additifs. Elle prend en entrée un dataframe contenant les observation et une formule spécifiant les termes de lissage. Ici "s(Temps, bs="cr", k=40)", définit un terme de lissage non paramétrique sur la variable 'Temps'. "cr", indique que l'on utilise des splines subiques de regréssion, et k=40 fixe la dimension de la base.
+On utilise la fonction $gam()$ du package **mgcv,** qui ajuste des modèles additifs.
+Elle prend en entrée un dataframe contenant les observation et une formule spécifiant les termes de lissage.
+Ici "s(Temps, bs="cr", k=40)", définit un terme de lissage non paramétrique sur la variable 'Temps'.
+"cr", indique que l'on utilise des splines subiques de regréssion, et k=40 fixe la dimension de la base.
 
 La fonction estime simultanément les coefficients $\hat{\beta}$ et le paramètre de lissage $\delta$ optimal par REML, et retourne un objet contenant la courbe lissée ainsi que tous les critères d'ajustements.
 
@@ -358,7 +390,8 @@ summary(modele_gam)
 
 Contrairement à la première alternative où le paramètre de lissage optimal devait être recherché manuellement via une grille de valeurs et la validation croisée généralisée $(\mathrm{GCV})$, la fonction $gam()$ automatise ce processus.
 
-En spécifiant $method = \text{``REML''}$, l'algorithme reformule le problème de lissage sous la forme d'un modèle mixte. Le paramètre de pénalité $\delta$ est alors estimé directement, comme un ratio entre la variance du signal et la variance du bruit.
+En spécifiant $method = \text{``REML''}$, l'algorithme reformule le problème de lissage sous la forme d'un modèle mixte.
+Le paramètre de pénalité $\delta$ est alors estimé directement, comme un ratio entre la variance du signal et la variance du bruit.
 
 Le degré de lissage optimal est ainsi obtenu en une seule étape, sans risque de sous-lissage.
 
@@ -402,13 +435,18 @@ ggplot(df_1, aes(x = Temps)) +
        y = "Consommation")
 ```
 
-Les grandes vagues dessinées par la courbe rouge représentent le rythme quotidien de consommation du premier individu. On remarque 14 pics et 14 creux. on en déduit que les creux correspondent aux périodes de faible consommation (la nuit) et les pics les périodes de haute consommation (milieu de journée).
+Les grandes vagues dessinées par la courbe rouge représentent le rythme quotidien de consommation du premier individu.
+On remarque 14 pics et 14 creux.
+on en déduit que les creux correspondent aux périodes de faible consommation (la nuit) et les pics les périodes de haute consommation (milieu de journée).
 
 Après avoir testé sur un individu et visualiser la qualité du lissage, on applique à l'ensemble des n = 6291 individu.
 
 ### Application à tous les individus (pour approche 2 PCA)
 
-Lors de l'exploration des données, 16 entreprises ont une consommation constante sur l'ensemble des deux semaines. Parmi elles, 15 affichent une consommation nulle sur les 672 instants, et une seule présente une valeur constante non nulle égale à 9. Ces profils ont donc une variance strictement nulle, ce qui pose problème lors l'estimation du paramètre de lissage $\delta$. En effet, $gam()$ ne peut pas ajuster un modèle sans variabilité.
+Lors de l'exploration des données, 16 entreprises ont une consommation constante sur l'ensemble des deux semaines.
+Parmi elles, 15 affichent une consommation nulle sur les 672 instants, et une seule présente une valeur constante non nulle égale à 9.
+Ces profils ont donc une variance strictement nulle, ce qui pose problème lors l'estimation du paramètre de lissage $\delta$.
+En effet, $gam()$ ne peut pas ajuster un modèle sans variabilité.
 
 Nous avons donc décidé d'exclure ces 16 individus de l'analyse, l'effectif final est donc n = 6275.
 
@@ -473,13 +511,17 @@ où :
 -   $\phi_k(t)$ sont les fonctions propres,
 -   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenu en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent à quel point la courbe de l'individu i s'écarte de la moyenne dans la direction $\phi_k$.
 
-Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t)$. Contrairement àl'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
+Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t)$.
+Contrairement àl'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
 
-**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites. Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'ecart-type car toutes les mesures sont dans la même unité (la consommation électrique).
+**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites.
+Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'ecart-type car toutes les mesures sont dans la même unité (la consommation électrique).
 
 ## Approche 1 : pca.fd() - package fda
 
-Cette approche consiste à d'abord lisser individuellement les courbes (section précédente), puis à appliquer l'ACPF via la fonction **'pca.fd()**' du package **'fda'**. L'objet **'fd**' passé en entrée, contient les coefficients B-splines $\hat \beta_i$ de chaque courbe lissée $\hat{f_i}$, ainsi que la base de B-splines commune. A partir de ces coefficients, **'pca.fd()'** estime l'opérateur de covariance **C(s,t),** défini récédemment, puis en extrait les fonctions propres $\phi_k$ et les scores $\xi_{ik}$ par diagonalisation.
+Cette approche consiste à d'abord lisser individuellement les courbes (section précédente), puis à appliquer l'ACPF via la fonction **'pca.fd()**' du package **'fda'**.
+L'objet **'fd**' passé en entrée, contient les coefficients B-splines $\hat \beta_i$ de chaque courbe lissée $\hat{f_i}$, ainsi que la base de B-splines commune.
+A partir de ces coefficients, **'pca.fd()'** estime l'opérateur de covariance **C(s,t),** défini récédemment, puis en extrait les fonctions propres $\phi_k$ et les scores $\xi_{ik}$ par diagonalisation.
 
 ```{r}
 # PCA fonctionnelle
@@ -522,7 +564,8 @@ plot(pca_res$harmonics[3], main = paste0("FP3 (", round(var[3], 1), "%)"))
 
 Les deux premières fonctions propres :
 
-CP1 - La première fonction propre présente une forme positive et régulière sur l'ensemble des deux semaines, avec une structure périodique journalière visible. Elle explique la majeure partie de la variance totale.
+CP1 - La première fonction propre présente une forme positive et régulière sur l'ensemble des deux semaines, avec une structure périodique journalière visible.
+Elle explique la majeure partie de la variance totale.
 
 CP2 - La deuxième fonction propre oscille entre le positif et le négatif, traduisant un contraste temporel dans les profils de consommation.
 
@@ -530,7 +573,8 @@ Une interprétation physique détaillée de ces composantes est proposées dans 
 
 ## Approche 2 : fpca.face() — package refund
 
-Approche, proposée par Xiao et al. (2016) repose sur une idée différente de l'approche 1 : au lieu de lisser les individus un à un, puis d'estimer l'opérateur de covariance à partir de courbes lissées, on estime et lisse *directement* la matrice de covariance globale C(s,t) à partir des données brutes. Concrètement, la méthode FACE (Fast Covariance Estimation) procède en deux étapes :
+Approche, proposée par Xiao et al. (2016) repose sur une idée différente de l'approche 1 : au lieu de lisser les individus un à un, puis d'estimer l'opérateur de covariance à partir de courbes lissées, on estime et lisse *directement* la matrice de covariance globale C(s,t) à partir des données brutes.
+Concrètement, la méthode FACE (Fast Covariance Estimation) procède en deux étapes :
 
 -   Elle estime d'abord la matrice de covariance brute à partir des n courbes observées.
 
@@ -538,7 +582,7 @@ Approche, proposée par Xiao et al. (2016) repose sur une idée différente de l
 
 Cette approche est particulièrement pratique pour des grands jeux de données car elle évite n opérations de lissage individuelles.
 
-On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$.On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$). 
+On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$.On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
 
 Pour la suite de notre analyse, nous isolons spécifiquement les deux premières composantes principales fonctionnelles.
 
@@ -592,7 +636,10 @@ ggplot(data_plot, aes(x = Temps)) +
 
 ```
 
-On observe une courbe strictement positive qui présente une strucutre périodique régulière sur les deux semaines. On remarque que le même schéma se répète chaque jours : des pics en journée et des creux pendant la nuit. On distingue également une différence entre les jours de semaine et le week-end. En effet les pics du week-end sont différents en amplitude, montrant un comportement de consommation distincts les jours non travaillés.
+On observe une courbe strictement positive qui présente une strucutre périodique régulière sur les deux semaines.
+On remarque que le même schéma se répète chaque jours : des pics en journée et des creux pendant la nuit.
+On distingue également une différence entre les jours de semaine et le week-end.
+En effet les pics du week-end sont différents en amplitude, montrant un comportement de consommation distincts les jours non travaillés.
 
 ```{r}
 # visualisation de la PC2
@@ -609,7 +656,10 @@ On observe là aussi une courbe qui ondule mais cette fois qui prend des valeurs
 
 ## Interpréation de la FP1
 
-La courbe de la première composante est assez abstraite. On cherche à comprendre ce que la PC1 mesure physiquement sur notre jeu. Pour essayer de traduire, on isole les comportements extrêmes de la population : les individus dans le top 10% des scores de la PC1 et ceux dans le bottom 10% de la PC1. On calcule ensuite la vraie courbe moyenne de ces deux groupes pour observer comment la PC1 affecte la forme globale de la productio sur une semaine.
+La courbe de la première composante est assez abstraite.
+On cherche à comprendre ce que la PC1 mesure physiquement sur notre jeu.
+Pour essayer de traduire, on isole les comportements extrêmes de la population : les individus dans le top 10% des scores de la PC1 et ceux dans le bottom 10% de la PC1.
+On calcule ensuite la vraie courbe moyenne de ces deux groupes pour observer comment la PC1 affecte la forme globale de la productio sur une semaine.
 
 ```{r}
 #score de la composante 1
@@ -648,9 +698,12 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la FP1 ?")
 ```
 
-On déduit que la première composante agit comme un multiplicateur global sur les deux semaines. On constate que les individus du top 10% consomment massivement plus d'énergie que la moyenne. Leurs pics journaliers sont également bien plus importants. A l'inverse, la consommation du Bottom 10% semble presque plate sur l'échelle du réseau.
+On déduit que la première composante agit comme un multiplicateur global sur les deux semaines.
+On constate que les individus du top 10% consomment massivement plus d'énergie que la moyenne.
+Leurs pics journaliers sont également bien plus importants.
+A l'inverse, la consommation du Bottom 10% semble presque plate sur l'échelle du réseau.
 
-## Interpréation de la PC2 
+## Interpréation de la PC2
 
 ```{r}
 #score de la composante 1
@@ -689,42 +742,41 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la PC2 ?")
 ```
 
-
 # GFCPA
 
 ## Normalité
 
 L'Analyse en Composantes Principales Fonctionnelle classique (appliquée précédemment) suppose que les variations autour de la moyenne suivent une loi Normale (d'après le chapitre 3.2).
-Le problème mathématique majeur de cette approche est qu'elle autorise mathématiquement des prédictions négatives. Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait
-théoriquement lui prédire une consommation de $-15$ MW, ce qui est impossible physiquement. Nous allons vérifier cette hypothèse sur le premier instant temporel :
+Le problème mathématique majeur de cette approche est qu'elle autorise mathématiquement des prédictions négatives.
+Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait théoriquement lui prédire une consommation de $-15$ MW, ce qui est impossible physiquement.
+Nous allons vérifier cette hypothèse sur le premier instant temporel :
 
 ```{r}
 qqnorm(df[,1])  
 ```
 
-On voit que les points ne s'alignent pas sur une droite. Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
+On voit que les points ne s'alignent pas sur une droite.
+Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
 
 ##Objectif et motivations de la méthode
 
 L'objectif de la GFPCA est d'extraire les profils types de consommation électrique d'un très grand nombre de courbes, en passant par un espace latent (caché), afin de garantir que le lissage mathématique respecte parfaitement la nature physique et probabiliste des données.
 
 Le problème mathématique majeur de la FCPA classique est qu'elle autorise mathématiquement des prédictions négatives.
-Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait
-théoriquement lui prédire une consommation de $-15$ MW, ce qui constitue une aberration physique.
+Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait théoriquement lui prédire une consommation de $-15$ MW, ce qui constitue une aberration physique.
 
-Pour respecter la nature de nos données (une consommation étant assimilable à un comptage
-strictement positif ou nul), nous adoptons le cadre de la Fast Generalized FPCA $(\mathrm{FGFPCA})$.
+Pour respecter la nature de nos données (une consommation étant assimilable à un comptage strictement positif ou nul), nous adoptons le cadre de la Fast Generalized FPCA $(\mathrm{FGFPCA})$.
 Cette méthode s'appuie sur des Modèles Mixtes Linéaires Généralisés $(\mathrm{GLMM})$ utilisant une loi de Poisson avec un lien logarithmique.
 
 Un modèle mixte est particulièrement adapté ici car il décompose la variance en deux composantes :
 
 $\textbf{Un effet fixe}$ : qui modélise le comportement moyen global du réseau.
 
-$\textbf{Des effets aléatoires}$ : qui estiment la déviation latente spécifique à chaque individu
-par rapport à la moyenne. Ce sont ces effets aléatoires qui serviront de base à notre nouvelle FPCA.
+$\textbf{Des effets aléatoires}$ : qui estiment la déviation latente spécifique à chaque individu par rapport à la moyenne.
+Ce sont ces effets aléatoires qui serviront de base à notre nouvelle FPCA.
 
 En utilisant un Modèle Mixte de Poisson avec un lien logarithmique, la GFPCA garantit que la prédiction sera construite sur l'exponentielle du signal latent, et donc strictement positive ou nulle.
-Ce modèle s'écrit mathématiquement comme suit : 
+Ce modèle s'écrit mathématiquement comme suit :
 
 Pour la fenêtre temporelle $j$, on modélise la production $Y_{ij}$ de la centrale $i$ par :
 
@@ -738,18 +790,15 @@ Où $\mu_{ij}$ est la consommation moyenne théorique de la centrale $i$ durant 
 
 ### Étape 1 : Préparation et binning (fenêtrage)
 
-L'implémentation de cette modélisation rigoureuse impose deux ajustements informatiques majeurs
-avant de lancer les calculs :
+L'implémentation de cette modélisation rigoureuse impose deux ajustements informatiques majeurs avant de lancer les calculs :
 
 Contrairement à $fpca.face()$ qui accepte une matrice de données globale, les algorithmes de modèles mixtes (comme la fonction $glmer()$ que nous utiliserons en pratique) exigent des données au format long.
-Nous convertissons donc notre dataframe pour obtenir une seule ligne par observation temporelle
-et par individu, soit $6\,291$ individus $\times$ $672$ points, c'est-à-dire plus de $4{,}2$ millions de lignes.
+Nous convertissons donc notre dataframe pour obtenir une seule ligne par observation temporelle et par individu, soit $6\,291$ individus $\times$ $672$ points, c'est-à-dire plus de $4{,}2$ millions de lignes.
 
 Résoudre des modèles mixtes de Poisson sur $4{,}2$ millions de lignes pour chacun des $672$ points temporels nécessite une puissance de calcul colossale qui ferait échouer l'algorithme.
 Pour contourner cette contrainte informatique, nous appliquons la méthode du binning : nous regroupons le temps par fenêtres locales (par exemple ici des blocs de $4$ heures, soit $8$ intervalles de $30$ minutes).
 
-L'objectif est d'estimer rapidement le signal latent de chaque entreprise sur ces blocs réduits,
-avant d'appliquer un lissage global continu à l'étape suivante.
+L'objectif est d'estimer rapidement le signal latent de chaque entreprise sur ces blocs réduits, avant d'appliquer un lissage global continu à l'étape suivante.
 
 ```{r}
 p <- 672
@@ -773,9 +822,11 @@ centres_fenetres <- unique(df_long$Fenetre)
 ## Estimation latente via modèles mixtes locaux
 
 Pour chaque bloc de 4 heures on isole les données et on ajuste un modèle mixte grâce à la fonction $glmer()$ (issue du package $lme4$).
-Le modèle sépare l'effet fixe (la consommation moyenne de tous les individus durant ces 4 heures) de l'effet aléatoire (le décalage propre de chaqur individu). Cet effet aléatoire est notre signal latent, ce qui nous permet de compresser nos données brutes bruitées en une petite matrice d'effets aléatoires.
+Le modèle sépare l'effet fixe (la consommation moyenne de tous les individus durant ces 4 heures) de l'effet aléatoire (le décalage propre de chaqur individu).
+Cet effet aléatoire est notre signal latent, ce qui nous permet de compresser nos données brutes bruitées en une petite matrice d'effets aléatoires.
 
-Puisque nous traitons des données semblables à des données de "comptage", nous utilisons la loi de Poisson avec un lien logarithmique ($family = poisson(link="log")$). La valeur extraite pour chaque centrale est son effet aléatoire i.e son écart latent par rapport à la moyenne à la moyenne du réseau durant ces 4 heures.
+Puisque nous traitons des données semblables à des données de "comptage", nous utilisons la loi de Poisson avec un lien logarithmique ($family = poisson(link="log")$).
+La valeur extraite pour chaque centrale est son effet aléatoire i.e son écart latent par rapport à la moyenne à la moyenne du réseau durant ces 4 heures.
 
 Pour extraire les effets aléatoires de chaque modèle on utilise la fonction $ranef()$.
 
@@ -798,15 +849,16 @@ for (j in 1:length(centres_fenetres)) {
 ### Application de la FCPA sur l'espace latent
 
 Nous prenons la matrice des signaux latents obtenus à la précédente étape et on lui applique une FCPA classique via la fonction $fpca.face$.
-En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on s'arrêtait là, la courbe ferait des sauts en escalier. Appliquer une FPCA va permettre de lier ces fenêtres entre elles et d'extraire les fonctions propres $\phi_k$ de notre réseau. 
+En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on s'arrêtait là, la courbe ferait des sauts en escalier.
+Appliquer une FPCA va permettre de lier ces fenêtres entre elles et d'extraire les fonctions propres $\phi_k$ de notre réseau.
 
 ```{r}
 # fcpa classique aux signaux latents
 fpca_latente <- fpca.face(Y = matrice_effets_locaux, pve = 0.95)
 ```
 
-Grâce à cela, nous pouvons extraire les composantes ainsi que les taux de variance qu'elles expliquent. On n'extraie ici que celles qui expliquent au moins 95% de variance.
-
+Grâce à cela, nous pouvons extraire les composantes ainsi que les taux de variance qu'elles expliquent.
+On n'extraie ici que celles qui expliquent au moins 95% de variance.
 
 ```{r}
 fpca_pour_plot <- fpca.face(Y = matrice_effets_locaux, npc = 10)
@@ -830,14 +882,15 @@ df_variance <- data.frame(
 print(df_variance)
 ```
 
-
 On remarque que cette méthode permet d'expliquer bien plus d'information via les deux premières composantes (98%) que les deux alternatives de la FPCA classique.
 
 ### Interpolation et Modèle Additif Global
 
-En soit, nous aurions pu nous arrêter à l'étape 3 en extrayant les scores et les fonctions propres du modèle FPCA latent. Mais cette quatrième étape est très importante dans le sens où elle permet de redessiner les courbes, de vérifier visuellement le résultat (i.e que les scores captent bien les tendances).
+En soit, nous aurions pu nous arrêter à l'étape 3 en extrayant les scores et les fonctions propres du modèle FPCA latent.
+Mais cette quatrième étape est très importante dans le sens où elle permet de redessiner les courbes, de vérifier visuellement le résultat (i.e que les scores captent bien les tendances).
 
-On réinterpole les courbes $\phi_k$ de l'étape 3 pour qu'elles aient de nouveau 672 points. Pour cela, nous utilisons la fonction $approx()$ qui réalise une interpolation temporelle linéaire pour combler les trous et étirer ces courbes sur la grille initiale    
+On réinterpole les courbes $\phi_k$ de l'étape 3 pour qu'elles aient de nouveau 672 points.
+Pour cela, nous utilisons la fonction $approx()$ qui réalise une interpolation temporelle linéaire pour combler les trous et étirer ces courbes sur la grille initiale
 
 ```{r}
 # nombre total de composantes
@@ -856,7 +909,8 @@ for(k in 1:K) {
 }
 ```
 
-D'après le chapitre 3.2, le binning a tendance à trop lisser les différences entre les individus. Pour corriger cela, nous lançons un grand modèle additif final (via la fonction $bam()$, une version de $gam()$ pour les grands jeux de données) défini par : $$\log(\mu_{i}(t)) = f(t) + \xi_{i1}\phi_1(t) + \xi_{i2}\phi_2(t)$$
+D'après le chapitre 3.2, le binning a tendance à trop lisser les différences entre les individus.
+Pour corriger cela, nous lançons un grand modèle additif final (via la fonction $bam()$, une version de $gam()$ pour les grands jeux de données) défini par : $$\log(\mu_{i}(t)) = f(t) + \xi_{i1}\phi_1(t) + \xi_{i2}\phi_2(t)$$
 
 Où $f(t)$ est la fonction lisse moyenne globale, et $\xi_{i1}, \xi_{i2}$ sont les scores ré-estimés de manière optimale pour chaque centrale.
 
@@ -887,7 +941,6 @@ df_long_echantillon$Production_Lissee <- predict(modele_final,
 
 ```
 
-
 On regarde la courbe lissée par Fast GFCPA sur le premier individu :
 
 ```{r}
@@ -903,19 +956,23 @@ ggplot(centrale_1, aes(x = Temps)) +
        y = "Consommation (MW)") 
 ```
 
-Nous voyons que la courbe verte suit bien les tendances du nuage de points, ce qui démontre le bon fonctionnement de notre modèle. 
+Nous voyons que la courbe verte suit bien les tendances du nuage de points, ce qui démontre le bon fonctionnement de notre modèle.
 
 ### Comparaison des deux approches :
 
-Les deux approches donnent des résultats cohérents : la première composante explique environ 80% de la variance totale dans les deux cas, confirmant que le niveau clobal de consommation est le principale mode de variation entre entreprises. Cependant, on peut noter quelques différences :
+Les deux approches donnent des résultats cohérents : la première composante explique environ 80% de la variance totale dans les deux cas, confirmant que le niveau clobal de consommation est le principale mode de variation entre entreprises.
+Cependant, on peut noter quelques différences :
 
-L'approche 1 (pca.fd) nécessite 3 composante pour atteindre plus de 90% de variance expliquée (92.1%), contre 2 composantes pour l'approche 2 (fpca.face) (91.4%). Les proportions de variance expliquée par composante sont légèrement différentes, ce qui s'explique par le fait qu'elles n'estiment pas l'opérateur de covariance de la même façon.
+L'approche 1 (pca.fd) nécessite 3 composante pour atteindre plus de 90% de variance expliquée (92.1%), contre 2 composantes pour l'approche 2 (fpca.face) (91.4%).
+Les proportions de variance expliquée par composante sont légèrement différentes, ce qui s'explique par le fait qu'elles n'estiment pas l'opérateur de covariance de la même façon.
 
-En termes de temps de calcul, l'approche 2 est nettement plus rapide car elle évite le lissage individuel des n = 6 275 courbes. Elle constitue donc un bon compromis entre précision et efficacité computationnelle.
+En termes de temps de calcul, l'approche 2 est nettement plus rapide car elle évite le lissage individuel des n = 6 275 courbes.
+Elle constitue donc un bon compromis entre précision et efficacité computationnelle.
 
 # Clustering
 
-Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres. Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
+Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres.
+Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
 
 Nous utilisons ces coordonnées comme variables d’entrée d’un algorithme de classification non supervisée (K-means), afin d’identifier des groupes de consommateurs présentant des profils fonctionnels similaires.
 
@@ -946,11 +1003,15 @@ fviz_nbclust(scores_pca, kmeans, method = "wss") +
 
 **Interprétation** La courbe présente une "cassure" très nette à k=2, suivie d'un second point d'inflexion aux alentours de k=4 ou k=5.
 
-Décision : Nous retenons k=4 clusters. Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) et la simplicité d'interprétation des profils de consommation pour EDF.
+Décision : Nous retenons k=4 clusters.
+Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) et la simplicité d'interprétation des profils de consommation pour EDF.
 
 ## Application de l'algorithme K-means
 
-ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA. Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA. Nous allons ensuite utiliser la fonction $kmeans$. On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
+ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA.
+Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA.
+Nous allons ensuite utiliser la fonction $kmeans$.
+On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
 
 ```{r}
 set.seed(123)
@@ -966,7 +1027,6 @@ print(table(as.factor(smart_clusters)))
 ```
 
 ## **Visualisation et Interprétation des profils types**
-
 
 Maintenant que nous savons quelle centrale appartient au groupe 1,2,3 ou 4, nous retournons dans notre matrice d'origine $W$ et pour chaque groupe, nous calculons la moyenne colonne par colonne (instant par instant) pour tracer la période type de ce groupe.
 
@@ -1003,31 +1063,44 @@ ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
 
 ### Sur données brutes
 
-Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon. Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période. Ce groupe regroupe donc les foyers présentant un comportement standard avec une faible consommation.
+Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon.
+Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période.
+Ce groupe regroupe donc les foyers présentant un comportement standard avec une faible consommation.
 
-Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée. Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
+Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée.
+Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
 
-Le **Cluster 3 (n = 310)** correspond à un profil de consommation plus modéré. Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2. Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
+Le **Cluster 3 (n = 310)** correspond à un profil de consommation plus modéré.
+Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2.
+Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
 
-Enfin, le **Cluster 4 (n = 103)**, très minoritaire, présente une consommation forte et une variabilité plus marquée. Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
+Enfin, le **Cluster 4 (n = 103)**, très minoritaire, présente une consommation forte et une variabilité plus marquée.
+Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
 ### Sur données log(1+Conso) (à titre de comparaison)
 
-Le **Cluster 1 (n = 1054)** correspond aux profils présentant le niveau global de consommation le plus faible de l’échantillon. Les cycles journaliers sont visibles mais d’amplitude modérée, avec une structure régulière sur l’ensemble des 14 jours. Ce groupe regroupe donc les foyers caractérisés par une faible intensité énergétique globale.
+Le **Cluster 1 (n = 1054)** correspond aux profils présentant le niveau global de consommation le plus faible de l’échantillon.
+Les cycles journaliers sont visibles mais d’amplitude modérée, avec une structure régulière sur l’ensemble des 14 jours.
+Ce groupe regroupe donc les foyers caractérisés par une faible intensité énergétique globale.
 
-Le **Cluster 2 (n = 498)** rassemble les profils les plus énergivores. La courbe moyenne se situe nettement au-dessus des autres groupes et présente des pics journaliers marqués, traduisant une forte amplitude intra-journalière. Ce cluster correspond aux consommateurs présentant la plus grande variabilité et le niveau moyen le plus élevé.
+Le **Cluster 2 (n = 498)** rassemble les profils les plus énergivores.
+La courbe moyenne se situe nettement au-dessus des autres groupes et présente des pics journaliers marqués, traduisant une forte amplitude intra-journalière.
+Ce cluster correspond aux consommateurs présentant la plus grande variabilité et le niveau moyen le plus élevé.
 
-Le **Cluster 3 (n = 2110)** représente un profil intermédiaire stable. Les cycles quotidiens sont bien définis et réguliers sur toute la période, avec un niveau de consommation moyen situé entre les clusters 1 et 2.
+Le **Cluster 3 (n = 2110)** représente un profil intermédiaire stable.
+Les cycles quotidiens sont bien définis et réguliers sur toute la période, avec un niveau de consommation moyen situé entre les clusters 1 et 2.
 
-Enfin, le **Cluster 4 (n = 2629)**, le plus important numériquement, présente un niveau global proche du cluster 3 mais avec une variabilité légèrement plus marquée au cours du temps. Les amplitudes journalières sont comparables, mais la dynamique apparaît moins régulière d’un jour à l’autre, traduisant une hétérogénéité temporelle plus prononcée.
+Enfin, le **Cluster 4 (n = 2629)**, le plus important numériquement, présente un niveau global proche du cluster 3 mais avec une variabilité légèrement plus marquée au cours du temps.
+Les amplitudes journalières sont comparables, mais la dynamique apparaît moins régulière d’un jour à l’autre, traduisant une hétérogénéité temporelle plus prononcée.
 
 Globalement, la segmentation obtenue met principalement en évidence une différenciation selon le niveau global de consommation, avec des nuances dans l’intensité et la régularité des cycles journaliers.
 
 ## Classification Ascendante Hiérarchique (CAH) (peut être à supprimer)
 
-Afin de confirmer la structure de groupe identifiée par la méthode du coude, nous réalisons une Classification Ascendante Hiérarchique sur les scores des 4 premières harmoniques. Nous utilisons la distance euclidienne et le critère de Ward, qui minimise la variance intra-classe à chaque étape de regroupement. 
+Afin de confirmer la structure de groupe identifiée par la méthode du coude, nous réalisons une Classification Ascendante Hiérarchique sur les scores des 4 premières harmoniques.
+Nous utilisons la distance euclidienne et le critère de Ward, qui minimise la variance intra-classe à chaque étape de regroupement.
 
 ```{r}
 #Calcul de la matrice distance
@@ -1047,9 +1120,12 @@ rect.hclust(res.cah, k = 4, border =2:5) #Encadrer les 4 groupes
 
 (à developper plus)
 
-Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
+Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours.
+L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle.
+Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
 
-La classification non supervisée réalisée sur les scores des quatre premières composantes a mis en évidence quatre profils distincts de consommation. La segmentation obtenue reflète principalement des différences de niveau global de consommation, avec des nuances dans la régularité et l’intensité des cycles journaliers.
+La classification non supervisée réalisée sur les scores des quatre premières composantes a mis en évidence quatre profils distincts de consommation.
+La segmentation obtenue reflète principalement des différences de niveau global de consommation, avec des nuances dans la régularité et l’intensité des cycles journaliers.
 
 Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une méthode efficace pour synthétiser et segmenter des données de consommation énergétique massives
 
