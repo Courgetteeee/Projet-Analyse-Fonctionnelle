@@ -541,7 +541,7 @@ Cette approche est particulièrement pratique pour des grands jeux de données c
 On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$ (c'est le bouquin qui dit qu'il faut le faire, jai pas trop compris pourquoi...) On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
 
 ```{r}
-W <- as.matrix(table)
+W <- as.matrix(smart.278co[idx_ok, ])
 
 modele_fpca <- fpca.face(Y = W, argvals = time, knots = 50, pve = 0.95)
 # summary(modele_fpca)
@@ -600,7 +600,7 @@ ggplot(data_plot2, aes(x = Temps)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_line(aes(y = FP2), color = "blue", linewidth = 1.2) +
   theme_minimal() +
-  labs(title = "2ème Composante Principale Fonctionnelle (FP2)",
+  labs(title = "FP2",
        x = "Temps (Intervalles de 30 min sur 2 semaine)",
        y = "Variation (FP2)")
 ```
@@ -642,7 +642,7 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
                                 "Moyenne Globale" = "black")) +
   geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
   theme_minimal() +
-  labs(title = "Interprétation Physique de la Composante 1",
+  labs(title = "Interprétation Physique de FP1",
        x = "Temps (Intervalles de 15 min sur 1 semaine)",
        y = "Volume de la variable",
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la FP1 ?")
@@ -812,7 +812,7 @@ Ces deux approches permettent d’identifier un compromis entre complexité du m
 
 ```{r}
 # Extraction des scores des 3 premières harmoniques
-scores_pca <- pca_res$scores[, 1:3]
+scores_pca <- modele_fpca$scores[, 1:3]
 
 # Méthode du coude
 fviz_nbclust(scores_pca, kmeans, method = "wss") +
@@ -912,9 +912,13 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 
 # Références
 
--   Goga, C. — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
+-   Goga Camélia — *Cours de Statistiques Fonctionnelles*, Université de Besançon.
 
--   *Functional Data Analysis* with R -
+-   Ciprian M. Crainiceanu, Jeff Goldsmith, Andrew Leroux, Erjia Cui *— Functional Data Analysis with R*
 
+<<<<<<< HEAD
 -   Jean-Marc Lasgouttes, Analyse fonctionnelle de données, Inria Paris.
 in (https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/mastere-esd/fda/)
+=======
+-   Julien Jacques, Cristian Preda — *Functional Data clustering : a survey*
+>>>>>>> cd56d6529c6ce9125b0b77af6bfe304c1e21b00a
