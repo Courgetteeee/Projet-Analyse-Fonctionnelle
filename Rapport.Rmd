@@ -171,7 +171,7 @@ $$ \sum_{d=1}^D \left(Y_i(t_d) - f_i(t_d)\right)^2  \;+\; \delta \int \left( f''
 Ainsi, la solution est donnée par :
 
 $$
-\hat\beta = (B^TB+ \delta P )^{-1}B^T Y_i
+\hat\beta_i = (B^TB+ \delta P )^{-1}B^T Y_i
 $$
 
 où B est la matrice D $\times$ q dont la d-ième ligne est $(B_1(t_d),...,B_q(t_d))$, $Y_i = (Y_{i1},...,Y_{iD})^T$ le vecteur des observations de l'entreprise i , et P est la matrice de pénalisation telle que $\beta^T P \beta = \displaystyle \int (f''_i(t))^2 dt .$ La matrice P se calcule facilement à partir des dérivées secondes des fonctions de base B-splines.
@@ -459,7 +459,7 @@ saveRDS(fd_final, file = "donnees/fd_final.rds") #15-20 min
 fd_final <- readRDS("donnees/fd_final.rds")
 ```
 
-# Analyse en Composantes Principales Fonctionnelle (ACPF)
+# Analyse en Composantes Principales Fonctionnelles (ACPF)
 
 L’Analyse en Composantes Principales Fonctionnelle (FPCA) permet de résumer la variabilité des courbes $Y_i(t)$ autour de leur moyenne fonctionnelle $\mu(t)$.
 
@@ -471,11 +471,11 @@ où :
 
 -   $\mu(t)$ est la courbe moyenne de la population,
 -   $\phi_k(t)$ sont les fonctions propres,
--   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenu en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent à quel point la courbe de l'individu i s'écarte de la moyenne dans la direction $\phi_k$.
+-   $\xi_{ik} = \int(Y_i(t)-\mu(t))\phi_k(t) dt$ sont les scores principaux de l'individu i, obtenus en projetant sa courbe centrée sur la fonction propre $\phi_k$. Ils mesurent l'écart de la courbe de l'individu i à la moyenne dans la direction $\phi_k$.
 
-Les fonctions propres $\phi_k(t)$ sont obtenues en digonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t)$. Contrairement àl'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
+Les fonctions propres $\phi_k(t)$ sont obtenues en diagonalisant l'opérateur de covariance : $C(s,t) = \frac{1}{n} \displaystyle \sum_{i=1}^n (Y_i(s)-\mu(s))(Y_i(t)-\mu(t))$. Contrairement à l'ACP traditionnelle où c'est une matrice de covariance qui est diagonalisée, ici c'est un opérateur de covariance.
 
-**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites. Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'ecart-type car toutes les mesures sont dans la même unité (la consommation électrique).
+**Remarque :** Les courbes sont centrées par rapport à la moyenne $\mu(t)$ mais pas réduites. Contrairement à l'ACP traditionnelle sur données multivariées, on ne divise pas par l'écart-type car toutes les mesures sont dans la même unité (la consommation électrique).
 
 ## Approche 1 : pca.fd() - package fda
 
@@ -901,39 +901,8 @@ Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente une consommation 
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
-### Sur données log(1+Conso) (à titre de comparaison)
-
-Le **Cluster 1 (n = 1054)** correspond aux profils présentant le niveau global de consommation le plus faible de l’échantillon. Les cycles journaliers sont visibles mais d’amplitude modérée, avec une structure régulière sur l’ensemble des 14 jours. Ce groupe regroupe donc les foyers caractérisés par une faible intensité énergétique globale.
-
-Le **Cluster 2 (n = 498)** rassemble les profils les plus énergivores. La courbe moyenne se situe nettement au-dessus des autres groupes et présente des pics journaliers marqués, traduisant une forte amplitude intra-journalière. Ce cluster correspond aux consommateurs présentant la plus grande variabilité et le niveau moyen le plus élevé.
-
-Le **Cluster 3 (n = 2110)** représente un profil intermédiaire stable. Les cycles quotidiens sont bien définis et réguliers sur toute la période, avec un niveau de consommation moyen situé entre les clusters 1 et 2.
-
-Enfin, le **Cluster 4 (n = 2629)**, le plus important numériquement, présente un niveau global proche du cluster 3 mais avec une variabilité légèrement plus marquée au cours du temps. Les amplitudes journalières sont comparables, mais la dynamique apparaît moins régulière d’un jour à l’autre, traduisant une hétérogénéité temporelle plus prononcée.
-
-Globalement, la segmentation obtenue met principalement en évidence une différenciation selon le niveau global de consommation, avec des nuances dans l’intensité et la régularité des cycles journaliers.
-
-## Classification Ascendante Hiérarchique (CAH) (peut être à supprimer)
-
-Afin de confirmer la structure de groupe identifiée par la méthode du coude, nous réalisons une Classification Ascendante Hiérarchique sur les scores des 4 premières harmoniques. Nous utilisons la distance euclidienne et le critère de Ward, qui minimise la variance intra-classe à chaque étape de regroupement.
-
-```{r}
-#Calcul de la matrice distance
-d<-dist(scores_pca, method = "euclidean")
-
-#Application méthode  Ward
-res.cah <- hclust(d, method = "ward.D2")
-
-#Visualisation dendrogramme
-plot(res.cah, labels = FALSE, main = "Dendrogramme de la CAH", sub = "", xlab = "")
-rect.hclust(res.cah, k = 4, border =2:5) #Encadrer les 4 groupes
-```
-
-**Analyse du dendrogramme** (à refaire)
 
 # Conclusion
-
-(à developper plus)
 
 Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
 
@@ -947,4 +916,5 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 
 -   *Functional Data Analysis* with R -
 
--   A COMPLETER
+-   Jean-Marc Lasgouttes, Analyse fonctionnelle de données, Inria Paris.
+in (https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/mastere-esd/fda/)
