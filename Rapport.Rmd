@@ -758,7 +758,7 @@ qqnorm(df[,1])
 On voit que les points ne s'alignent pas sur une droite.
 Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
 
-##Objectif et motivations de la méthode
+## Objectif et motivations de la méthode
 
 L'objectif de la GFPCA est d'extraire les profils types de consommation électrique d'un très grand nombre de courbes, en passant par un espace latent (caché), afin de garantir que le lissage mathématique respecte parfaitement la nature physique et probabiliste des données.
 
@@ -1036,7 +1036,7 @@ courbes_clusters <- matrix(NA, nrow = clusters, ncol = p)
 
 #vraie moyenne par groupe
 for(c in 1:clusters) {
-  courbes_clusters[c, ] <- colMeans(W[affectation_clusters == c, ])
+  courbes_clusters[c, ] <- colMeans(W[smart_clusters == c, ])
 }
 
 df_clusters <- data.frame(
@@ -1055,8 +1055,8 @@ ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
   theme_minimal() +
   labs(title = "Clustering Fonctionnel",
        x = "Temps (Intervalles de 30 min sur 2 semaines)",
-       y = "Consommation Électrique Moyenne (MW)" +
-  theme(legend.position = "bottom")) 
+       y = "Consommation Électrique Moyenne (MW)") +
+  theme(legend.position = "bottom")
 ```
 
 ## Interprétation des profils types (centres des clusters)
