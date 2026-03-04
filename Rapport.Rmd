@@ -600,7 +600,7 @@ ggplot(data_plot2, aes(x = Temps)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
   geom_line(aes(y = FP2), color = "blue", linewidth = 1.2) +
   theme_minimal() +
-  labs(title = "2ème Composante Principale Fonctionnelle (FP2)",
+  labs(title = "FP2",
        x = "Temps (Intervalles de 30 min sur 2 semaine)",
        y = "Variation (FP2)")
 ```
