@@ -368,7 +368,7 @@ df_1$Courbe_Lisse <- predict(modele_gam, newdata = df_1)
 
 # données brutes VS signal estimé
 ggplot(df_1, aes(x = Temps)) +
-  geom_point(aes(y = Var), alpha = 0.3, color = "black", size = 1) +
+  geom_line(aes(y = Var), alpha = 0.3, color = "black", size = 1) +
   geom_line(aes(y = Courbe_Lisse), color = "red", linewidth = 1.2) +
   theme_minimal() +
   labs(title = "Lissage semi-paramétrique d'un individu",
@@ -489,7 +489,7 @@ pca_res <- pca.fd(fd_final, nharm = 10)
 var <- pca_res$varprop *100
 var_cum <- cumsum(pca_res$varprop*100)
 
-data.frame(CP  = 1:10,
+data.frame(FP  = 1:10,
            prop = round(var[1:10], 2),
            cum  = round(var_cum[1:10], 2))
 ```
@@ -501,23 +501,23 @@ nb_cp <- min(which(var_cum >= 90))
 
 #DF pour simplifier le plot
 df_var <- data.frame(
-  CP = 1:8,
+  FP = 1:8,
   prop = var[1:8]
 )
 
 #Plot de la variance expliquée
-ggplot(df_var, aes(x=CP, y=prop))+
+ggplot(df_var, aes(x=FP, y=prop))+
   geom_col(fill="skyblue")+
   geom_vline(xintercept=nb_cp, color="coral")+
   theme_minimal()+
-  labs(title = "Variance expliquée par les CP",
-       x = "Composante principale", y="Variance expliquée (%)")
+  labs(title = "Variance expliquée par les FP",
+       x = "Fonction propre", y="Variance expliquée (%)")
 ```
 
 ```{r, echo=FALSE}
-plot(pca_res$harmonics[1], main = paste0("CP1 (", round(var[1], 1), "%)"))
-plot(pca_res$harmonics[2], main = paste0("CP2 (", round(var[2], 1), "%)"))
-plot(pca_res$harmonics[3], main = paste0("CP3 (", round(var[3], 1), "%)"))
+plot(pca_res$harmonics[1], main = paste0("FP1 (", round(var[1], 1), "%)"))
+plot(pca_res$harmonics[2], main = paste0("FP2 (", round(var[2], 1), "%)"))
+plot(pca_res$harmonics[3], main = paste0("FP3 (", round(var[3], 1), "%)"))
 ```
 
 Les deux premières fonctions propres :
@@ -558,8 +558,8 @@ variance_expliquee <- valeurs_propres / sum(valeurs_propres)
 pc1 <- fonctions_propres[, 1] * sqrt(p)
 pc2 <- fonctions_propres[, 2] * sqrt(p)
 
-data_plot <- data.frame(Temps = time, PC1 = pc1)
-data_plot2 <- data.frame(Temps = time, PC2 = pc2)
+data_plot <- data.frame(Temps = time, FP1 = pc1)
+data_plot2 <- data.frame(Temps = time, FP2 = pc2)
 
 
 # Variance expliquée
@@ -567,16 +567,16 @@ var2     <- modele_fpca$evalues / sum(modele_fpca$evalues) * 100
 var_cum2 <- cumsum(var2)
 nb_cp2 <- min(which(var_cum2 >= 90))
 df_var2 <- data.frame(
-  CP   = 1:length(var2),
+  FP   = 1:length(var2),
   prop = var2
 )
 
-ggplot(df_var2, aes(x = CP, y = prop)) +
+ggplot(df_var2, aes(x = FP, y = prop)) +
   geom_col(fill = "skyblue", alpha = 0.8) +
   geom_vline(xintercept = nb_cp2, color = "coral", linetype = "dashed", linewidth = 1) +
   theme_minimal() +
   labs(title = "Approche 2 — Variance expliquée (fpca.face)",
-       x = "Composante principale", y = "Variance expliquée (%)")
+       x = "Fonction propre", y = "Variance expliquée (%)")
 df_var2
 ```
 
@@ -584,11 +584,11 @@ df_var2
 # visualisation de la PC1
 ggplot(data_plot, aes(x = Temps)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-  geom_line(aes(y = PC1), color = "blue", linewidth = 1.2) +
+  geom_line(aes(y = FP1), color = "blue", linewidth = 1.2) +
   theme_minimal() +
-  labs(title = "PC1",
+  labs(title = "FP1",
        x = "Temps (Intervalles de 30 min sur 2 semaines)",
-       y = "Variation (PC1)")
+       y = "Variation (FP1)")
 
 ```
 
@@ -598,16 +598,16 @@ On observe une courbe strictement positive qui présente une strucutre périodiq
 # visualisation de la PC2
 ggplot(data_plot2, aes(x = Temps)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
-  geom_line(aes(y = PC2), color = "blue", linewidth = 1.2) +
+  geom_line(aes(y = FP2), color = "blue", linewidth = 1.2) +
   theme_minimal() +
-  labs(title = "2ème Composante Principale Fonctionnelle (PC2)",
+  labs(title = "2ème Composante Principale Fonctionnelle (FP2)",
        x = "Temps (Intervalles de 30 min sur 2 semaine)",
-       y = "Variation (PC2)")
+       y = "Variation (FP2)")
 ```
 
 On observe là aussi une courbe qui ondule mais cette fois qui prend des valeurs négatives ou nulles.
 
-## Interpréation de la PC1
+## Interpréation de la FP1
 
 La courbe de la première composante est assez abstraite. On cherche à comprendre ce que la PC1 mesure physiquement sur notre jeu. Pour essayer de traduire, on isole les comportements extrêmes de la population : les individus dans le top 10% des scores de la PC1 et ceux dans le bottom 10% de la PC1. On calcule ensuite la vraie courbe moyenne de ces deux groupes pour observer comment la PC1 affecte la forme globale de la productio sur une semaine.
 
@@ -645,12 +645,12 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
   labs(title = "Interprétation Physique de la Composante 1",
        x = "Temps (Intervalles de 15 min sur 1 semaine)",
        y = "Volume de la variable",
-       subtitle = "Comment se comportent dans la vraie vie les extrêmes de la PC1 ?")
+       subtitle = "Comment se comportent dans la vraie vie les extrêmes de la FP1 ?")
 ```
 
 On déduit que la première composante agit comme un multiplicateur global sur les deux semaines. On constate que les individus du top 10% consomment massivement plus d'énergie que la moyenne. Leurs pics journaliers sont également bien plus importants. A l'inverse, la consommation du Bottom 10% semble presque plate sur l'échelle du réseau.
 
-## Interpréation de la PC2???
+## Interpréation de la FP2???
 
 # GFCPA
 
