@@ -642,7 +642,7 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
                                 "Moyenne Globale" = "black")) +
   geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
   theme_minimal() +
-  labs(title = "Interprétation Physique de la Composante 1",
+  labs(title = "Interprétation Physique de FP1",
        x = "Temps (Intervalles de 15 min sur 1 semaine)",
        y = "Volume de la variable",
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la FP1 ?")
