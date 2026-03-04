@@ -901,7 +901,6 @@ Enfin, le **Cluster 4 (n = 28)**, très minoritaire, présente une consommation 
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
-
 # Conclusion
 
 Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours. L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle. Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
@@ -916,9 +915,6 @@ Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une m
 
 -   Ciprian M. Crainiceanu, Jeff Goldsmith, Andrew Leroux, Erjia Cui *— Functional Data Analysis with R*
 
-<<<<<<< HEAD
--   Jean-Marc Lasgouttes, Analyse fonctionnelle de données, Inria Paris.
-in (https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/mastere-esd/fda/)
-=======
+-   Jean-Marc Lasgouttes, Analyse fonctionnelle de données, Inria Paris. in (<https://who.rocq.inria.fr/Jean-Marc.Lasgouttes/mastere-esd/fda/>)
+
 -   Julien Jacques, Cristian Preda — *Functional Data clustering : a survey*
->>>>>>> cd56d6529c6ce9125b0b77af6bfe304c1e21b00a
