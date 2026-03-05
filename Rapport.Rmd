@@ -742,7 +742,129 @@ ggplot(df_interpretation, aes(x = Temps, y = Activite, color = Groupe)) +
        subtitle = "Comment se comportent dans la vraie vie les extrêmes de la PC2 ?")
 ```
 
-# GFCPA
+### Comparaison des deux approches :
+
+Les deux approches donnent des résultats cohérents : la première composante explique environ 80% de la variance totale dans les deux cas, confirmant que le niveau clobal de consommation est le principale mode de variation entre entreprises.
+Cependant, on peut noter quelques différences :
+
+L'approche 1 (pca.fd) nécessite 3 composante pour atteindre plus de 90% de variance expliquée (92.1%), contre 2 composantes pour l'approche 2 (fpca.face) (91.4%).
+Les proportions de variance expliquée par composante sont légèrement différentes, ce qui s'explique par le fait qu'elles n'estiment pas l'opérateur de covariance de la même façon.
+
+En termes de temps de calcul, l'approche 2 est nettement plus rapide car elle évite le lissage individuel des n = 6 275 courbes.
+Elle constitue donc un bon compromis entre précision et efficacité computationnelle.
+
+# Clustering
+
+Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres.
+Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
+
+Nous utilisons ces coordonnées comme variables d’entrée d’un algorithme de classification non supervisée (K-means), afin d’identifier des groupes de consommateurs présentant des profils fonctionnels similaires.
+
+L'algorithme des K-Means cherche à partitionner les individus en $C$ groupes (clusters) $G_1, \dots, G_C$ en minimisant l'inertie intra-classe :
+
+$$\min \sum_{c=1}^C \sum_{i \in G_c} \|\boldsymbol{\xi}_i - \boldsymbol{\mu}_c\|^2$$
+
+Où $\boldsymbol{\mu}_c$ est le centre de gravité (le profil de scores moyen) du cluster $c$, et $||.||$ désigne la norme euclidienne standard dans $\mathbb{R}^K$, avec K le nombre de composantes retenues.
+
+## Choix du nombre de clusters
+
+Le nombre de groupes $k$ est déterminé à l’aide de deux critères complémentaires :
+
+-   La méthode du coude, qui consiste à analyser la décroissance de l’inertie intra-classe (Within-Cluster Sum of Squares) en fonction de $k$ ;
+-   L’indice de Silhouette, qui mesure la qualité de séparation entre les clusters en comparant la cohésion intra-classe et la séparation inter-classe.
+
+Ces deux approches permettent d’identifier un compromis entre complexité du modèle et qualité de partition.
+
+```{r}
+# Extraction des scores des 3 premières harmoniques
+scores_pca <- modele_fpca$scores[, 1:3]
+
+# Méthode du coude
+fviz_nbclust(scores_pca, kmeans, method = "wss") +
+  labs(title = "Optimisation du nombre de clusters (Méthode du coude)")
+
+```
+
+**Interprétation** La courbe présente une "cassure" très nette à k=2, suivie d'un second point d'inflexion aux alentours de k=4 ou k=5.
+
+Décision : Nous retenons k=4 clusters.
+Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) et la simplicité d'interprétation des profils de consommation pour EDF.
+
+## Application de l'algorithme K-means
+
+ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA.
+Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA.
+Nous allons ensuite utiliser la fonction $kmeans$.
+On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
+
+```{r}
+set.seed(123)
+
+
+clusters <- 4
+km_res <- kmeans(scores_pca, centers = clusters, nstart = 25)
+
+smart_clusters <- km_res$cluster
+
+# nombre de centrales par groupe
+print(table(as.factor(smart_clusters)))
+```
+
+## **Visualisation et Interprétation des profils types**
+
+Maintenant que nous savons quelle centrale appartient au groupe 1,2,3 ou 4, nous retournons dans notre matrice d'origine $W$ et pour chaque groupe, nous calculons la moyenne colonne par colonne (instant par instant) pour tracer la période type de ce groupe.
+
+```{r}
+#matrice qui stocke les profils
+courbes_clusters <- matrix(NA, nrow = clusters, ncol = p)
+
+#vraie moyenne par groupe
+for(c in 1:clusters) {
+  courbes_clusters[c, ] <- colMeans(W[smart_clusters == c, ])
+}
+
+df_clusters <- data.frame(
+  Temps = rep(1:p, times = clusters),
+  Production = as.vector(t(courbes_clusters)),
+  Famille = as.factor(rep(paste("Famille", 1:clusters), each = p))
+)
+```
+
+Nous visualisons maintenant les courbes moyennes par famille :
+
+```{r, echo=FALSE}
+ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
+  theme_minimal() +
+  labs(title = "Clustering Fonctionnel",
+       x = "Temps (Intervalles de 30 min sur 2 semaines)",
+       y = "Consommation Électrique Moyenne (MW)") +
+  theme(legend.position = "bottom")
+```
+
+## Interprétation des profils types (centres des clusters)
+
+### Sur données brutes
+
+Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon.
+Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période.
+Ce groupe regroupe donc les foyers présentant un.
+comportement standard avec une faible consommation.
+
+Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée.
+Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
+
+Le **Cluster 3 (n = 310)** correspond à un profil de consommation plus modéré.
+Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2.
+Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
+
+Enfin, le **Cluster 4 (n = 103)**, très minoritaire, présente une consommation forte et une variabilité plus marquée.
+Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
+
+Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
+
+## Pour aller plus loin - GFCPA
 
 ## Normalité
 
@@ -957,128 +1079,6 @@ ggplot(centrale_1, aes(x = Temps)) +
 ```
 
 Nous voyons que la courbe verte suit bien les tendances du nuage de points, ce qui démontre le bon fonctionnement de notre modèle.
-
-### Comparaison des deux approches :
-
-Les deux approches donnent des résultats cohérents : la première composante explique environ 80% de la variance totale dans les deux cas, confirmant que le niveau clobal de consommation est le principale mode de variation entre entreprises.
-Cependant, on peut noter quelques différences :
-
-L'approche 1 (pca.fd) nécessite 3 composante pour atteindre plus de 90% de variance expliquée (92.1%), contre 2 composantes pour l'approche 2 (fpca.face) (91.4%).
-Les proportions de variance expliquée par composante sont légèrement différentes, ce qui s'explique par le fait qu'elles n'estiment pas l'opérateur de covariance de la même façon.
-
-En termes de temps de calcul, l'approche 2 est nettement plus rapide car elle évite le lissage individuel des n = 6 275 courbes.
-Elle constitue donc un bon compromis entre précision et efficacité computationnelle.
-
-# Clustering
-
-Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres.
-Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
-
-Nous utilisons ces coordonnées comme variables d’entrée d’un algorithme de classification non supervisée (K-means), afin d’identifier des groupes de consommateurs présentant des profils fonctionnels similaires.
-
-L'algorithme des K-Means cherche à partitionner les individus en $C$ groupes (clusters) $G_1, \dots, G_C$ en minimisant l'inertie intra-classe :
-
-$$\min \sum_{c=1}^C \sum_{i \in G_c} \|\boldsymbol{\xi}_i - \boldsymbol{\mu}_c\|^2$$
-
-Où $\boldsymbol{\mu}_c$ est le centre de gravité (le profil de scores moyen) du cluster $c$, et $||.||$ désigne la norme euclidienne standard dans $\mathbb{R}^K$, avec K le nombre de composantes retenues.
-
-## Choix du nombre de clusters
-
-Le nombre de groupes $k$ est déterminé à l’aide de deux critères complémentaires :
-
--   La méthode du coude, qui consiste à analyser la décroissance de l’inertie intra-classe (Within-Cluster Sum of Squares) en fonction de $k$ ;
--   L’indice de Silhouette, qui mesure la qualité de séparation entre les clusters en comparant la cohésion intra-classe et la séparation inter-classe.
-
-Ces deux approches permettent d’identifier un compromis entre complexité du modèle et qualité de partition.
-
-```{r}
-# Extraction des scores des 3 premières harmoniques
-scores_pca <- modele_fpca$scores[, 1:3]
-
-# Méthode du coude
-fviz_nbclust(scores_pca, kmeans, method = "wss") +
-  labs(title = "Optimisation du nombre de clusters (Méthode du coude)")
-
-```
-
-**Interprétation** La courbe présente une "cassure" très nette à k=2, suivie d'un second point d'inflexion aux alentours de k=4 ou k=5.
-
-Décision : Nous retenons k=4 clusters.
-Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) et la simplicité d'interprétation des profils de consommation pour EDF.
-
-## Application de l'algorithme K-means
-
-ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA.
-Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA.
-Nous allons ensuite utiliser la fonction $kmeans$.
-On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
-
-```{r}
-set.seed(123)
-
-
-clusters <- 4
-km_res <- kmeans(scores_pca, centers = clusters, nstart = 25)
-
-smart_clusters <- km_res$cluster
-
-# nombre de centrales par groupe
-print(table(as.factor(smart_clusters)))
-```
-
-## **Visualisation et Interprétation des profils types**
-
-Maintenant que nous savons quelle centrale appartient au groupe 1,2,3 ou 4, nous retournons dans notre matrice d'origine $W$ et pour chaque groupe, nous calculons la moyenne colonne par colonne (instant par instant) pour tracer la période type de ce groupe.
-
-```{r}
-#matrice qui stocke les profils
-courbes_clusters <- matrix(NA, nrow = clusters, ncol = p)
-
-#vraie moyenne par groupe
-for(c in 1:clusters) {
-  courbes_clusters[c, ] <- colMeans(W[smart_clusters == c, ])
-}
-
-df_clusters <- data.frame(
-  Temps = rep(1:p, times = clusters),
-  Production = as.vector(t(courbes_clusters)),
-  Famille = as.factor(rep(paste("Famille", 1:clusters), each = p))
-)
-```
-
-Nous visualisons maintenant les courbes moyennes par famille :
-
-```{r, echo=FALSE}
-ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
-  geom_line(linewidth = 1.2) +
-  geom_vline(xintercept = seq(96, 672, by = 96), color = "gray", linetype = "dotted") +
-  theme_minimal() +
-  labs(title = "Clustering Fonctionnel",
-       x = "Temps (Intervalles de 30 min sur 2 semaines)",
-       y = "Consommation Électrique Moyenne (MW)") +
-  theme(legend.position = "bottom")
-```
-
-## Interprétation des profils types (centres des clusters)
-
-### Sur données brutes
-
-Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon.
-Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période.
-Ce groupe regroupe donc les foyers présentant un.
-comportement standard avec une faible consommation.
-
-Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée.
-Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
-
-Le **Cluster 3 (n = 310)** correspond à un profil de consommation plus modéré.
-Les cycles quotidiens sont bien identifiables, mais l’amplitude est globalement plus faible que dans le cluster 2.
-Ce groupe se situe ainsi à un niveau intermédiaire, avec une dynamique relativement stable mais moins intense.
-
-Enfin, le **Cluster 4 (n = 103)**, très minoritaire, présente une consommation forte et une variabilité plus marquée.
-Les cycles journaliers demeurent visibles mais l’intensité et l’évolution temporelle diffèrent des autres groupes, suggérant des comportements spécifiques au sein de l’échantillon.
-
-Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
 # Conclusion
 
