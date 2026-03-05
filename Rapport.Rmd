@@ -780,15 +780,24 @@ Ces deux approches permettent d’identifier un compromis entre complexité du m
 # Extraction des scores des 3 premières harmoniques
 scores_pca <- modele_fpca$scores[, 1:3]
 
+fviz_nbclust(scores_pca, kmeans, method = "silhouette") +
+  labs(title = "Optimisation du nombre de clusters (Silhouette)")
+```
+
+```{r}
 # Méthode du coude
 fviz_nbclust(scores_pca, kmeans, method = "wss") +
   labs(title = "Optimisation du nombre de clusters (Méthode du coude)")
 
 ```
 
-**Interprétation** La courbe présente une "cassure" très nette à k=2, suivie d'un second point d'inflexion aux alentours de k=4 ou k=5.
+**Interprétation**
 
-Décision : Nous retenons k=4 clusters.
+Pour la méthode du coude, la courbe présente une "cassure" très nette à k=2, suivie d'un second point d'inflexion aux alentours de k=4 ou k=5.
+
+Pour l'indice de Silhouette, la courbe décroit légèrement de 0.9 (k=2) à 0.77 (k=4), mais ces valeurs restent élevées, indiquant une bonne séparation des clusters quelle que soit la valeur de k testée (entre 2 et 4).
+
+Décision : Nous retenons **k=4** clusters.
 Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) et la simplicité d'interprétation des profils de consommation pour EDF.
 
 ## Application de l'algorithme K-means
