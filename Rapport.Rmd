@@ -106,7 +106,7 @@ Afin de synthétiser cette information, nous calculons ensuite la courbe moyenne
 
 **Remarque** : La médiane calculée ici est une médiane point par point, elle est calculée indépendamment à chaque instant t.
 Elle ne tient pas compte de la structure globale des courbes.
-Une alternative plus rigoureuse est la médiane géométrique fonctionnelle, qui peut être calculé grâce à la fonction median.fd(.) du package fda.
+Une alternative plus rigoureuse est la médiane géométrique fonctionnelle, qui peut être calculé grâce au package fda.
 
 ```{r stats}
 #Courbe moyenne et mediane
@@ -363,8 +363,6 @@ fd_final <- fd(coefs_mat, base_bspline)
 La méthode décrite ici provient du livre $\underline{Functional\ Data\ Analysis\ with\ R}$.
 Le modèle est identique à l'Alternative 1.
 La seule différence réside dans la sélection du paramètre de lissage $\delta$ : au lieu d'une recherche manuelle par GCV sur une grille de valeur, celui-ci est estimé automatiquement par la méthode REML (Restricted Maximum Likelihood) intégrée à gam().
-
-(petit passage sur méthode REML ?)
 
 On utilise la fonction $gam()$ du package **mgcv,** qui ajuste des modèles additifs.
 Elle prend en entrée un dataframe contenant les observation et une formule spécifiant les termes de lissage.
@@ -831,7 +829,7 @@ Ce choix offre un excellent compromis entre la réduction de l'erreur (inertie) 
 
 ## Application de l'algorithme K-means
 
-ous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA.
+Nous allons ici procéder à un algorithme Kmeans sur les 3 premiers scores FCPA.
 Nous allons donc extraire les 3 premières colonnes de la matrice des scores de notre modèle FCPA.
 Nous allons ensuite utiliser la fonction $kmeans$.
 On utilise aussi $nstart = 25$ pour que l'algo teste plusieurs points de départ et trouve la meilleure séparation possible.
@@ -888,8 +886,7 @@ ggplot(df_clusters, aes(x = Temps, y = Production, color = Famille)) +
 
 Le **Cluster 1 (n = 5850)** correspond au profil majoritaire de l’échantillon.
 Il présente une structure journalière régulière, avec des cycles bien définis et relativement stables sur l’ensemble de la période.
-Ce groupe regroupe donc les foyers présentant un.
-comportement standard avec une faible consommation.
+Ce groupe regroupe donc les foyers présentant un comportement standard avec une faible consommation.
 
 Le **Cluster 2 (n = 28)** rassemble des profils se distinguant par un niveau global plus élevé et une amplitude journalière marquée.
 Les cycles restent visibles mais présentent une variabilité plus importante au cours du temps, traduisant une intensité énergétique bien supérieure et des fluctuations plus prononcées.
@@ -908,7 +905,7 @@ Globalement, la segmentation met principalement en évidence une différenciatio
 ### Normalité
 
 L'Analyse en Composantes Principales Fonctionnelle classique (appliquée précédemment) suppose que les variations autour de la moyenne suivent une loi Normale.
-Bien que cette hypothèse ne soit pas strictement nécessaire das notre contexte, nous explorons ici une approche alternative, la GFPCA, plus adaptée aux données asymétriques, avec des données manquantes par exemple.
+Bien que cette hypothèse ne soit pas strictement nécessaire dans notre contexte, nous explorons ici une approche alternative, la GFPCA, plus adaptée aux données asymétriques, avec des données manquantes par exemple.
 
 Un problème majeur de la FPCA classique est qu'elle peut autoriser mathématiquement des prédictions négatives.
 Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait théoriquement lui prédire une consommation de $-15$ MW, ce qui est impossible physiquement.
