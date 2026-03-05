@@ -941,7 +941,7 @@ df_long <- df_long %>%
 centres_fenetres <- unique(df_long$Fenetre)
 ```
 
-## Estimation latente via modèles mixtes locaux
+### Etape 2 : Estimation latente via modèles mixtes locaux
 
 Pour chaque bloc de 4 heures on isole les données et on ajuste un modèle mixte grâce à la fonction $glmer()$ (issue du package $lme4$).
 Le modèle sépare l'effet fixe (la consommation moyenne de tous les individus durant ces 4 heures) de l'effet aléatoire (le décalage propre de chaqur individu).
@@ -968,7 +968,7 @@ for (j in 1:length(centres_fenetres)) {
 }
 ```
 
-### Application de la FCPA sur l'espace latent
+### Etape 3 : Application de la FCPA sur l'espace latent
 
 Nous prenons la matrice des signaux latents obtenus à la précédente étape et on lui applique une FCPA classique via la fonction $fpca.face$.
 En effet, puisque l'étape 2 a été calculée sur des blocs de 4 heures, si on s'arrêtait là, la courbe ferait des sauts en escalier.
@@ -1006,7 +1006,7 @@ print(df_variance)
 
 On remarque que cette méthode permet d'expliquer bien plus d'information via les deux premières composantes (98%) que les deux alternatives de la FPCA classique.
 
-### Interpolation et Modèle Additif Global
+### Etape 4 : Interpolation et Modèle Additif Global
 
 En soit, nous aurions pu nous arrêter à l'étape 3 en extrayant les scores et les fonctions propres du modèle FPCA latent.
 Mais cette quatrième étape est très importante dans le sens où elle permet de redessiner les courbes, de vérifier visuellement le résultat (i.e que les scores captent bien les tendances).
