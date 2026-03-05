@@ -33,21 +33,22 @@ library(factoextra)
 
 # 1 - Introduction
 
-Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de mesure espacés de 30 minutes sur deux semaines consécutives.
-On note i = 1,...,n, l'indice d'une entreprise et $t\in[1,672]$ l'instant de mesure.
+Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de discrétisation espacés de 30 minutes sur deux semaines consécutives.
+On note i = 1,...,n, l'indice d'une entreprise, T la durée totale d'observation, soit deux semaines et $t\in[0,T]$ l'instant de mesure.
 
 Les données présentent plusieurs propriétés qui justifient une approche par statistiques fonctionnelles :
 
--   **Continuité** : les profils de consommations observés $Y_i(t)$ sont des discrétisations d'une fonction continue sous-jacente.
+-   **Continuité** : les profils de consommations $Y_i(t)$ sont observés à des instants discrets d'un temps t appartenant à un intervalle continu.
 
--   **Ordre** : l'intervalle temporel [1,672] est ordonnée et muni d'une distance : l'instant $t_{10}$ arrive necessairement après $t_9$, ce qui distinque les données fonctionnelles d'un simple vecteur de variables.
+-   **Ordre** : l'intervalle temporel [0,T] est un intervalle continu ordonée.
+    Les instants de mesure $t_1,...,t_{672}$ ne sont que des points d'observation discrets de ce domaine continue.
 
--   **Cohérence** : les courbes sont toutes définies sur le même domaine, à la même échalle et avec la même interprétation pour toutes les entreprises i et tous les instants t.
+-   **Cohérence** : les courbes sont toutes définies sur le même domaine, à la même échelle et avec la même interprétation pour toutes les entreprises i et tous les instants t.
 
 -   **Régularité** : la fonction $f_i$ est supposée suffisamment lisse et ne varie pas brutalement pour des petites variations de t.
 
--   **Colocalisation** : chaque instant $t$ a la même interprétation pour toutes les entreprises.
-    Par exemple, t=48 correspond toujours à la fin du premier jour pour tous les individus.
+-   **Colocalisation** : chaque instant $t\in[0:T]$ a la même interprétation pour toutes les entreprises.
+    Par exemple, le 48ème instant correspond toujours à la fin du premier jour pour tous les individus.
 
 Ces propriétés nous amènent à considérer chaque ligne du jeu de données non pas comme un vecteur de $\mathbb{R}^D$, mais comme la discrétisation d'une fonction de consommation évoluant dans le temps.
 Nous adaptons donc une approche de Statistiques Fonctionnelles (FDA).
@@ -167,7 +168,7 @@ $$ Y_i(t_d) = f_i(t_d)+\epsilon_i(t_d), \space d=1,...,D $$
 
 où $\epsilon_i$ est le bruit et $f_i$ est estimée dans une base de B-splines $B_1(.),...., B_q(.)$, de dimension q = K+m, avec :
 
--   K = nombre de noeuds intérieurs équidistants sur [1 : 672]
+-   K = nombre de noeuds intérieurs équidistants.
 
 -   m-1 = degré des polynômes par morceaux.
 
@@ -201,7 +202,7 @@ De plus, le recours à la pénalisation permet d'utiliser un nombre de noeuds g�
 Pour construire notre base B-splines, nous utilisons la fonction **create.bspline.basis()**, du package ***fda***.
 On lui spécifie :
 
--   rangeval = c(1,p) : l'intervalle de définiton de la base, ici [1,672]
+-   rangeval = c(1,p) : l'intervalle de définiton de la base.
 
 -   nbasis = q : le nombre total de fonction de base, q = K+m = 40.
 
@@ -230,7 +231,7 @@ Une approche individuelle est plus rigoureuse qu'un $\delta$ commun car les entr
 
 Pour chaque valeur de $\delta$, la fonction **fdPar()** du package ***fda*** crée un objet de paramètres fonctionnels encodant la base B-splines (base_bspline), l'ordre de dérivation utilisé pour la pénalisation (Lfdobj=2, correspondant à la dérivée seconde $f_i''$), et la valeur du paramètre de lissage $\delta$.
 
-La fonction **smooth.basis()** va prendre en entrée les instants (times = [1:672]), les observations brutes $y_i$ et l'objet fdpPar contenant la base et le paramètre de pénalisation.
+La fonction **smooth.basis()** va prendre en entrée les instants, les observations brutes $y_i$ et l'objet fdpPar contenant la base et le paramètre de pénalisation.
 Elle résout le critère pénalisé et retourne un objet contenant la courbe lisée $\hat{f_i}$ sous forme de coefficients B-splines, ainsi que la valeur du critère GCV.
 Le $\delta^*$ optimal est celui qui minise ce critère.
 
