@@ -31,7 +31,7 @@ library(cluster)
 library(factoextra)
 ```
 
-# Introduction
+# 1 - Introduction
 
 Ce projet a pour objectif d'étudier les profils de consommation électrique de $n = 6\,291$ entreprises, observées sur $D = 672$ instants de mesure espacés de 30 minutes sur deux semaines consécutives.
 On note i = 1,...,n, l'indice d'une entreprise et $t\in[1,672]$ l'instant de mesure.
@@ -87,7 +87,7 @@ time <- 1:p
 
 -   ***ggplot2, tidyr, dplyr*** : packages utilisés pour la manipulation et visualisation des données.
 
-# Exploration des données
+# 2 - Exploration des données
 
 Avant toute modélisation, on peut représenter des exemples des données brutes :
 
@@ -147,7 +147,7 @@ sum(is.na(table))
 Aucune valeur manquante n’est détectée dans la matrice de données.
 Il n’est donc pas nécessaire d’effectuer une étape d’imputation ou de reconstruction préalable.
 
-# Lissage semi-paramétrique
+# 3 - Lissage semi-paramétrique
 
 L'objectif de cette partie est de passer des observations discrètes $Y_i$ à des courbes continues $\hat{f}_i$, afin de pouvoir appliquer par la suite l'ACP fonctionnelle et le clustering.
 
@@ -497,7 +497,7 @@ saveRDS(fd_final, file = "donnees/fd_final.rds") #15-20 min
 fd_final <- readRDS("donnees/fd_final.rds")
 ```
 
-# Analyse en Composantes Principales Fonctionnelle (ACPF)
+# 4 - Analyse en Composantes Principales Fonctionnelle (ACPF)
 
 L’Analyse en Composantes Principales Fonctionnelle (FPCA) permet de résumer la variabilité des courbes $Y_i(t)$ autour de leur moyenne fonctionnelle $\mu(t)$.
 
@@ -582,14 +582,15 @@ Concrètement, la méthode FACE (Fast Covariance Estimation) procède en deux é
 
 Cette approche est particulièrement pratique pour des grands jeux de données car elle évite n opérations de lissage individuelles.
 
-On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$.On lui demande 50 noeuds ($knots=50$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
+On utilise donc la fonction $fpca.face()$ du package $refund$ qui implémente cet algorithme .On extraie ici les deux premières composantes (PC1 et PC2), que l'on multiplie par la suite par $\sqrt{p}$.
+On lui demande 35 noeuds ($knots=35$) et de retenir les composantes expliquant 95% de la variance ($pve=0.95$).
 
 Pour la suite de notre analyse, nous isolons spécifiquement les deux premières composantes principales fonctionnelles.
 
 ```{r}
 W <- as.matrix(smart.278co[idx_ok, ])
 
-modele_fpca <- fpca.face(Y = W, argvals = time, knots = 50, pve = 0.95)
+modele_fpca <- fpca.face(Y = W, argvals = time, knots = 35, pve = 0.95)
 # summary(modele_fpca)
 
 #on extraie les éléments de la FCPA
@@ -753,7 +754,7 @@ Les proportions de variance expliquée par composante sont légèrement différe
 En termes de temps de calcul, l'approche 2 est nettement plus rapide car elle évite le lissage individuel des n = 6 275 courbes.
 Elle constitue donc un bon compromis entre précision et efficacité computationnelle.
 
-# Clustering
+# 5 - Clustering
 
 Après réduction de dimension par Analyse en Composantes Principales Fonctionnelle (FPCA), chaque individu est représenté par un vecteur de scores $(\xi_{i1}, \xi_{i2}, \xi_{i3}, \xi_{i4})$, correspondant à sa projection sur les quatre premières fonctions propres.
 Ces scores résument l’essentiel de la variabilité observée entre les profils de consommation.
@@ -864,28 +865,28 @@ Les cycles journaliers demeurent visibles mais l’intensité et l’évolution 
 
 Globalement, la segmentation met principalement en évidence une différenciation selon le niveau global de consommation, tout en révélant des nuances dans l’intensité et la régularité des cycles journaliers.
 
-## Pour aller plus loin - GFCPA
+## 6 - Pour aller plus loin - GFCPA
 
-## Normalité
+### Normalité
 
-L'Analyse en Composantes Principales Fonctionnelle classique (appliquée précédemment) suppose que les variations autour de la moyenne suivent une loi Normale (d'après le chapitre 3.2).
-Le problème mathématique majeur de cette approche est qu'elle autorise mathématiquement des prédictions négatives.
+L'Analyse en Composantes Principales Fonctionnelle classique (appliquée précédemment) suppose que les variations autour de la moyenne suivent une loi Normale.
+Bien que cette hypothèse ne soit pas strictement nécessaire das notre contexte, nous explorons ici une approche alternative, la GFPCA, plus adaptée aux données asymétriques, avec des données manquantes par exemple.
+
+Un problème majeur de la FPCA classique est qu'elle peut autoriser mathématiquement des prédictions négatives.
 Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait théoriquement lui prédire une consommation de $-15$ MW, ce qui est impossible physiquement.
+
 Nous allons vérifier cette hypothèse sur le premier instant temporel :
 
 ```{r}
 qqnorm(df[,1])  
 ```
 
-On voit que les points ne s'alignent pas sur une droite.
-Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
+On voit que les points ne s'alignent pas tout à fait sur une droite.
+Ainsi, nos données de consommation ne sont pas gaussiennes sur le premier instant d'où l'utilité possible de la méthode de l'ACPFG (Analyse en Composante Principale Fonctionnelle Généralisée).
 
 ## Objectif et motivations de la méthode
 
 L'objectif de la GFPCA est d'extraire les profils types de consommation électrique d'un très grand nombre de courbes, en passant par un espace latent (caché), afin de garantir que le lissage mathématique respecte parfaitement la nature physique et probabiliste des données.
-
-Le problème mathématique majeur de la FCPA classique est qu'elle autorise mathématiquement des prédictions négatives.
-Si l'on applique un score très négatif à une petite entreprise, le modèle classique pourrait théoriquement lui prédire une consommation de $-15$ MW, ce qui constitue une aberration physique.
 
 Pour respecter la nature de nos données (une consommation étant assimilable à un comptage strictement positif ou nul), nous adoptons le cadre de la Fast Generalized FPCA $(\mathrm{FGFPCA})$.
 Cette méthode s'appuie sur des Modèles Mixtes Linéaires Généralisés $(\mathrm{GLMM})$ utilisant une loi de Poisson avec un lien logarithmique.
@@ -1031,7 +1032,7 @@ for(k in 1:K) {
 }
 ```
 
-D'après le chapitre 3.2, le binning a tendance à trop lisser les différences entre les individus.
+D'après le chapitre 3.2 de **Functional Data Analysis**, le binning a tendance à trop lisser les différences entre les individus.
 Pour corriger cela, nous lançons un grand modèle additif final (via la fonction $bam()$, une version de $gam()$ pour les grands jeux de données) défini par : $$\log(\mu_{i}(t)) = f(t) + \xi_{i1}\phi_1(t) + \xi_{i2}\phi_2(t)$$
 
 Où $f(t)$ est la fonction lisse moyenne globale, et $\xi_{i1}, \xi_{i2}$ sont les scores ré-estimés de manière optimale pour chaque centrale.
@@ -1080,18 +1081,26 @@ ggplot(centrale_1, aes(x = Temps)) +
 
 Nous voyons que la courbe verte suit bien les tendances du nuage de points, ce qui démontre le bon fonctionnement de notre modèle.
 
-# Conclusion
-
-(à developper plus)
+# 7 - Conclusion
 
 Ce projet avait pour objectif d’analyser des profils de consommation électrique à partir d’enregistrements demi-horaires observés sur une période de 14 jours.
-L’Analyse en Composantes Principales Fonctionnelle a permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première harmonique, expliquant près de 70 % de la variance totale, traduit principalement une variation d’amplitude globale autour de la moyenne fonctionnelle.
-Les composantes suivantes capturent des modulations temporelles plus fines mais de moindre importance.
 
-La classification non supervisée réalisée sur les scores des quatre premières composantes a mis en évidence quatre profils distincts de consommation.
-La segmentation obtenue reflète principalement des différences de niveau global de consommation, avec des nuances dans la régularité et l’intensité des cycles journaliers.
+Nous avons pu comparer deux approches de lissage (GCV et REML) ainsi que deux approches d'ACPF (*pca.fd* et *fpca.face*).
+Ces comparaisons nous ont permis de mieux comprendre les avantages et limites de chaque méthode.
+Finalement l'approche avec fpca.face s'est rélvélée la plus rapide et tout aussi performante que pca.fd.
 
-Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une méthode efficace pour synthétiser et segmenter des données de consommation énergétique massives
+L’Analyse en Composantes Principales Fonctionnelle a donc permis de résumer l’information contenue dans les 672 observations par individu en un nombre réduit de composantes.La première fonction propre explique plus de 80% de la variance totale, traduisant principalement une variation du niveau global de consommation.
+Les fonctions propres suivantes capturent des modulations temporelles plus fines de moindre importance, comme le contraste jour/nuit.
+
+La classification K-means réalisée sur les scores des trois premières fonctions propres a mis en évidence quatre profils distincts de consommation, principalement différenciés par leur niveau global de consommation.
+
+Ainsi, l’approche FPCA suivie d’un clustering sur les scores constitue une méthode efficace pour synthétiser et segmenter des données de consommation énergétique massives.
+
+Nous avons également exploré la GFPCA, une approche plus robuste à la non-normalité des données, qui confirme les résultats obtenus avec la FPCA classique.
+
+Plusieurs axes pourraient prolonger ce travail.
+Le premier serait de la prédiction fonctionnelle : utiliser les profils de la première semaine pour prédire la seconde, via des modèles de régression fonctionnelle.
+Un second axe pourrait être la détection d'anomalies, c'est à dire identifier automatiquement les entreprises dont le profil s'écarte significativement de leur cluster, ce qui pourrait être utile pour détecter des comportements atypiques ou des pannes.
 
 # Références
 
